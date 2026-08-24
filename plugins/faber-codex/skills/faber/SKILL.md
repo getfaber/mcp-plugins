@@ -7,6 +7,18 @@ description: Publish private artifacts from an AI session to Faber and retrieve 
 
 Use Faber as a durable artifact library for knowledge your team can reuse.
 
+## Choose the artifact source
+
+Choose the content source before preparing an artifact:
+
+- When the user identifies an existing artifact by name or path, resolve it to
+  an absolute path and pass that path directly as `content_ref`. Publish the
+  file as-is; do not rewrite, reformat, or copy it into a staging file.
+- Otherwise, prepare a new artifact by following the steps below.
+
+The tool schema, file eligibility, safety, and metadata requirements apply to
+both paths.
+
 ## Before publishing
 
 1. Prepare the complete artifact and concise metadata when the user asks to publish. Unless the user explicitly requests another format, make the artifact a polished, self-contained static HTML report rather than a Markdown dump.
@@ -38,10 +50,9 @@ do not suppress that approval.
 Call `faber_publish_artifact` using the content source declared by the tool
 supplied alongside this skill. Do not invent, substitute, or convert between
 content-source fields. When the schema declares `content_ref`, write a newly
-generated artifact to a uniquely named file under `~/.faber/staging`. Pass
-existing files directly from their current path. Faber takes a private snapshot
-of the file contents but never creates a local copy, moves, rewrites, changes
-permissions on, or deletes the source file.
+generated artifact to a uniquely named file under `~/.faber/staging`. Faber
+takes a private snapshot of the file contents but never creates a local copy,
+moves, rewrites, changes permissions on, or deletes the source file.
 
 Keep `distilled_knowledge` as bounded inline Markdown metadata when the schema
 declares it; do not write it into the artifact file or pass it through
