@@ -9,24 +9,25 @@ Use Faber as a durable artifact library for knowledge your team can reuse.
 
 ## Choose the artifact source
 
-Choose the content source before preparing an artifact:
+Choose the source before doing any preparation:
 
-- When the user identifies an existing artifact by name or path, resolve it to
-  an absolute path and pass that path directly as `content_ref`. Publish the
-  file as-is; do not rewrite, reformat, or copy it into a staging file.
-- Otherwise, prepare a new artifact by following the steps below.
+- **Existing artifact:** When the user identifies an existing artifact by name
+  or path, use that file as the source. Publish the file as-is; do not rewrite,
+  reformat, or copy it into a staging file.
+- **New artifact:** Otherwise, prepare a new artifact by following the next
+  section.
 
 The tool schema, file eligibility, safety, and metadata requirements apply to
 both paths.
 
-## Before publishing
+## Prepare a new artifact
 
 1. Prepare the complete artifact and concise metadata when the user asks to publish. Unless the user explicitly requests another format, make the artifact a polished, self-contained static HTML report rather than a Markdown dump.
 2. For HTML, follow `references/html-publishing.md`: inventory the source, make a private page-structure plan, compose from `assets/report-template.html`, validate, and only then publish. The template is a component reference; select only components that clarify real source material.
 3. Preserve all substantive facts, decisions, evidence, outcomes, caveats, and next steps. Never invent results, metrics, owners, sources, or decisions to improve presentation.
 4. Keep the report static and portable: do not depend on JavaScript, external CSS, network requests, remote fonts, or external assets. Never put secrets, raw transcripts, or private session details in the artifact or private session knowledge.
-5. Provide private session knowledge with non-empty `Outcome`, `Decisions and Rationale`, `Reusable Knowledge`, and `Verification` headings.
-6. Publish through the content source declared by the `faber_publish_artifact` tool supplied alongside this skill. Reports are private to the publishing user by default.
+
+## Publishing
 
 Use only the Faber tools supplied alongside this skill and follow their schemas.
 If those tools are unavailable or unhealthy, report that clearly and stop; do
@@ -40,25 +41,64 @@ Pass the exact model identifier when known. Use `update_of` for a new version of
 the same artifact. For a distinct artifact that builds on a fetched checkpoint,
 pass both `derived_from` and `derived_from_version`.
 
-### Publishing
-
 Publish one regular UTF-8 file. An explicit request to publish establishes
 consent for that artifact, so do not ask for another Faber-specific
 confirmation. Publishing remains an external write in native host approval UI;
 do not suppress that approval.
 
-Call `faber_publish_artifact` using the content source declared by the tool
-supplied alongside this skill. Do not invent, substitute, or convert between
-content-source fields. When the schema declares `content_ref`, write a newly
-generated artifact to a uniquely named file under `~/.faber/staging`. Faber
-takes a private snapshot of the file contents but never creates a local copy,
-moves, rewrites, changes permissions on, or deletes the source file.
+Publish through the content source declared by the `faber_publish_artifact`
+tool supplied alongside this skill. Always prefer `content_ref` when it is
+advertised; otherwise pass inline `content`. Do not route by host, product, or
+operating-system name, and do not invent, substitute, or convert between
+content-source fields.
 
-Keep `distilled_knowledge` as bounded inline Markdown metadata when the schema
-declares it; do not write it into the artifact file or pass it through
-`content_ref`. Follow the content-source field's remaining description for file
-eligibility, byte limits, and oversize guidance. Never
-truncate or split an artifact without the user's direction.
+Apply the declared capability to the source chosen above:
+
+- **Existing artifact:** If the schema advertises `content_ref`, resolve and
+  pass the existing file's absolute path directly. If it advertises `content`,
+  read and pass the exact file contents. Never stage or rewrite an existing
+  artifact.
+- **New artifact:** If the schema advertises `content_ref`, write the completed
+  artifact to a uniquely named file under `~/.faber/staging` and pass its
+  absolute path. If it advertises `content`, pass the completed content inline.
+
+For `content_ref`, Faber stores an encrypted local outbox snapshot until
+delivery. It never moves, rewrites, changes permissions on, or deletes the
+source file. Once a `content_ref` publication is accepted, never retry it
+through an inline or remote tool. Reports are private to the publishing user by
+default.
+
+Return the artifact link to the user as soon as publication completes. When
+the local tool returns a `publication_ref` with `status=pending`, report that
+publication is continuing and do not keep the task active merely
+to poll it. Use `faber_publish_status` only when the user asks for status or a
+later background workflow needs diagnostics.
+
+## Attach distilled knowledge
+
+After the artifact result or receipt is available, attach distilled knowledge
+only when the host can start a truly detached background subagent that retains
+access to the supplied Faber tools. The parent task must not wait for that
+subagent. Do not infer detachment from a generic subagent or background option:
+the host contract must guarantee that the child remains runnable after the
+parent result, and the launch call must return a confirmed handle. A child that
+is cancelled when a CLI parent exits is not detached. Never claim that
+knowledge work started unless that launch call succeeded; otherwise skip it.
+Give the subagent only the relevant session context and instruct it to:
+
+1. Prepare bounded Markdown with non-empty `Outcome`, `Decisions and Rationale`, `Reusable Knowledge`, and `Verification` headings.
+2. Call `faber_attach_knowledge` with `publication_ref` when that field is advertised, or with the exact completed `artifact_id` and `version` otherwise.
+3. Exit after Faber accepts the attachment, or leave failure details in the host's available background diagnostics.
+
+If detached execution is unavailable, the background subagent would lose
+Faber tool access, or the session has no reusable knowledge, skip knowledge
+generation and attachment. Never delay or invalidate an artifact publication
+for distilled knowledge, and never put private session knowledge in the
+artifact file or `content_ref`.
+
+Follow the content-source field's description for file eligibility, byte
+limits, and oversize guidance. Never truncate or split an artifact without the
+user's direction.
 
 Do not publish directories, symlinks, credential locations, or files containing
 secrets. Self-contained HTML is the default; other single-file text artifacts
