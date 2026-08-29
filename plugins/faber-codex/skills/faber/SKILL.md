@@ -44,9 +44,11 @@ it must not initiate authentication.
 When fetching a Faber artifact URL, do not treat it as a generic public webpage.
 Honor any `?version=N` checkpoint in the URL.
 
-Pass the exact model identifier when known. Use `update_of` for a new version of
-the same artifact. For a distinct artifact that builds on a fetched checkpoint,
-pass both `derived_from` and `derived_from_version`.
+Pass the exact model identifier as artifact provenance when the publish tool
+exposes that field and the identifier is known; this does not select a model for
+background work. Use `update_of` for a new version of the same artifact. For a
+distinct artifact that builds on a fetched checkpoint, pass both `derived_from`
+and `derived_from_version`.
 
 ## Choose the publish source
 
@@ -150,27 +152,47 @@ work: the executor may capture bounded main-session context and
 continue private knowledge generation in its own background process. Do not
 prepare that context; do not call another tool, wait, poll, or keep the task
 active for this optional work. Knowledge failure never invalidates the artifact.
+Executor-owned background knowledge selects its own model; the main agent must
+not discover or pass model metadata.
 For `knowledge_action=attach_if_background_supported`, continue to Optional
 asynchronous knowledge. For any other non-empty `knowledge_action`, preserve the
 surfaced artifact result and follow or report the returned recovery guidance;
 never retry or invalidate the completed publication because of optional
 knowledge.
 
+When status reports `knowledge_action=retry`, the artifact is already complete.
+Call `faber_retry_knowledge` once with the same `publication_ref`, surface that
+knowledge generation resumed, and do not poll unless the user later requests
+status. If retry is unavailable or expired, report that knowledge was not
+attached without republishing the artifact.
+
 ## Optional asynchronous knowledge
 
-This branch is mutually exclusive with executor-owned knowledge. Only follow
-this section when a successful result explicitly includes
-`knowledge_action=attach_if_background_supported`. The artifact link or receipt
-must already be visible. Start at most one independent background task only when
-it already has the supplied `faber_attach_knowledge` tool without a new approval
-and does not keep the current task active or require waiting; otherwise skip
-knowledge.
+This is the only agent-side knowledge branch. Follow it only when a completed
+artifact or durably accepted publication explicitly includes
+`knowledge_action=attach_if_background_supported`; a result without that action
+belongs to executor-owned knowledge. The artifact link or receipt must already
+be visible. Start at most one independent background task only when it already
+has the supplied `faber_attach_knowledge` tool without a new approval and does
+not keep the current task active or require waiting; otherwise skip knowledge.
 
-Give the background task the exact target fields returned by Faber and only
-bounded facts, decisions, rationale, and verification relevant to the artifact.
-It creates the four-section private knowledge attachment required by the tool.
-The main agent must not draft the capsule, wait, poll, or use blocking work as a
-fallback. Never pass a local path, credential, or raw transcript.
+Use a native background child and select the host's inherit or same-as-parent
+model option. Do not choose a model identifier, launch another CLI process, or
+use a joined child. If the host cannot provide an inherited-model background
+child, do not attempt agent-side attachment; the executor may complete its
+fallback independently.
+
+Give the background task the exact target fields returned by Faber. Copy into
+its prompt up to 12 concise bullets, totaling at most 4 KiB, that preserve every
+session-only fact, decision, rationale, verification result, and cited source
+relevant to the artifact but absent from it; do not replace those inputs with
+publication metadata. Never pass a local path, credential, or raw transcript to
+the child prompt itself, including in descriptive or provenance bullets. This
+transfer is not capsule drafting: the child creates the four-section private
+knowledge attachment required by the tool. The main agent must not draft the
+capsule, wait, poll, or use blocking work as a fallback. A delayed executor
+fallback may start if the child has not attached within its grace period;
+first-write-wins attachment keeps the artifact valid if their work overlaps.
 
 ## Reusing knowledge
 
