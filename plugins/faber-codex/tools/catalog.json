@@ -5,7 +5,7 @@
     {
       "name": "faber_attach_knowledge",
       "title": "Attach private knowledge to a Faber artifact",
-      "description": "Attach distilled private session knowledge to a publication when explicitly requested or needed for recovery. Normal local content_ref publishing derives and attaches knowledge in a background process. The attachment waits for the exact published artifact version, does not create a version, and is first-write-wins.",
+      "description": "Attach distilled private session knowledge to a publication when requested by knowledge_action or needed for recovery. The attachment waits for the exact published artifact version, does not create a version, and is first-write-wins.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -112,7 +112,7 @@
     {
       "name": "faber_publish_artifact",
       "title": "Publish artifact to Faber",
-      "description": "Publish an artifact to Faber when the user asks. For a report or document, default to a polished, self-contained static HTML artifact unless the user requests another format. Make HTML easy to read: lead with a clear title and short orientation; use semantic HTML and a clear heading hierarchy; use responsive layout; and include a compact sidebar in every artifact (anchored navigation for multi-section reports, or a concise context/summary panel for short ones). Preserve substantive facts and caveats. Keep artifacts portable and private: do not use JavaScript, external CSS, network requests, remote fonts, or external assets, and never include secrets, raw transcript text, or private session details. These HTML and sidebar guidelines do not apply to code, datasets, or an explicitly requested alternate format. Reports are private to the publishing user by default. If Faber reports multiple workspaces, ask the user which named workspace should receive this artifact and retry with workspace_name; use workspace_slug only when Faber reports duplicate names. Otherwise do not ask for a separate approval step. To amend an existing report after a later prompt, fetch its source and pass update_of so Faber appends an immutable version. Pass the absolute path to the completed UTF-8 file in content_ref. When bounded main-session context is available, Faber distills and attaches private knowledge in the background as part of this publish; do not create knowledge context, call another tool, or wait for it.",
+      "description": "Publish an artifact to Faber when the user asks. For a report or document, default to a polished, self-contained static HTML artifact unless the user requests another format. Make HTML easy to read: lead with a clear title and short orientation; use semantic HTML and a clear heading hierarchy; use responsive layout; and include a compact sidebar in every artifact (anchored navigation for multi-section reports, or a concise context/summary panel for short ones). Preserve substantive facts and caveats. Keep artifacts portable and private: do not use JavaScript, external CSS, network requests, remote fonts, or external assets, and never include secrets, raw transcript text, or private session details. These HTML and sidebar guidelines do not apply to code, datasets, or an explicitly requested alternate format. Reports are private to the publishing user by default. If Faber reports multiple workspaces, ask the user which named workspace should receive this artifact and retry with workspace_name; use workspace_slug only when Faber reports duplicate names. Otherwise do not ask for a separate approval step. To amend an existing report after a later prompt, fetch its source and pass update_of so Faber appends an immutable version. Pass the absolute path to the completed UTF-8 file in content_ref. Follow the returned knowledge_action after surfacing the artifact result. Without an action, Faber handles available private knowledge in its own background process; do not create knowledge context, call another tool, or wait for it.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -196,7 +196,7 @@
           "content_ref"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": {}
+        "additionalProperties": false
       },
       "annotations": {
         "readOnlyHint": false,
@@ -270,6 +270,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "faber_retry_knowledge",
+      "description": "Retry failed background knowledge generation for an already completed local publication while its encrypted session handoff is still retained. This never republishes or versions the artifact.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "publication_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Publication reference returned by faber_publish_artifact."
+          }
+        },
+        "required": [
+          "publication_ref"
+        ]
       }
     },
     {

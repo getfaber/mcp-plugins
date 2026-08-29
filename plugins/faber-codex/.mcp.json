@@ -6,6 +6,9 @@
         "./scripts/launch-companion.sh",
         "mcp"
       ],
+      "env_vars": [
+        "CODEX_HOME"
+      ],
       "cwd": "."
     }
   }
