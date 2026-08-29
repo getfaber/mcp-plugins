@@ -179,20 +179,29 @@ not keep the current task active or require waiting; otherwise skip knowledge.
 Use a native background child and select the host's inherit or same-as-parent
 model option. Do not choose a model identifier, launch another CLI process, or
 use a joined child. If the host cannot provide an inherited-model background
-child, do not attempt agent-side attachment; the executor may complete its
-fallback independently.
+child, skip optional knowledge for this publication.
 
-Give the background task the exact target fields returned by Faber. Copy into
-its prompt up to 12 concise bullets, totaling at most 4 KiB, that preserve every
-session-only fact, decision, rationale, verification result, and cited source
-relevant to the artifact but absent from it; do not replace those inputs with
-publication metadata. Never pass a local path, credential, or raw transcript to
-the child prompt itself, including in descriptive or provenance bullets. This
-transfer is not capsule drafting: the child creates the four-section private
+Begin the background-task prompt with a `Target` block containing the exact
+target fields accepted by the supplied `faber_attach_knowledge` tool. Use only
+`publication_ref` when that field is available; otherwise use the returned
+`artifact_id` and `version`, plus any returned workspace selector accepted by
+the tool. Tell the child to copy every target value into
+`faber_attach_knowledge`; it must never infer a target or workspace from a title,
+marker, or session fact. Copy into its prompt up to 12 concise bullets, totaling
+at most 4 KiB, that prioritize the most important session-only facts, decisions,
+rationale, verification results,
+and cited sources relevant to the artifact but absent from it; do not replace
+those inputs with publication metadata. Before launching, remove every bullet
+that contains a local filesystem path, `content_ref` value, credential, or raw
+transcript text.
+Omit unsafe details rather than replacing them with publication metadata.
+Never pass the removed value to the child in descriptive or provenance text.
+This transfer is not capsule drafting: the child creates the four-section private
 knowledge attachment required by the tool. The main agent must not draft the
-capsule, wait, poll, or use blocking work as a fallback. A delayed executor
-fallback may start if the child has not attached within its grace period;
-first-write-wins attachment keeps the artifact valid if their work overlaps.
+capsule, wait, poll, or use blocking work as a fallback. The child agent's failure
+never invalidates the artifact and does not trigger a second generation path.
+Tell the child to call `faber_attach_knowledge` exactly once, then exit without
+polling, retrying, republishing, or calling other Faber tools.
 
 ## Reusing knowledge
 
