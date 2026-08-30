@@ -112,7 +112,7 @@
     {
       "name": "faber_publish_artifact",
       "title": "Publish artifact to Faber",
-      "description": "Publish an artifact to Faber when the user asks. For a report or document, default to a polished, self-contained static HTML artifact unless the user requests another format. Make HTML easy to read: lead with a clear title and short orientation; use semantic HTML and a clear heading hierarchy; use responsive layout; and include a compact sidebar in every artifact (anchored navigation for multi-section reports, or a concise context/summary panel for short ones). Preserve substantive facts and caveats. Keep artifacts portable and private: do not use JavaScript, external CSS, network requests, remote fonts, or external assets, and never include secrets, raw transcript text, or private session details. These HTML and sidebar guidelines do not apply to code, datasets, or an explicitly requested alternate format. Reports are private to the publishing user by default. If Faber reports multiple workspaces, ask the user which named workspace should receive this artifact and retry with workspace_name; use workspace_slug only when Faber reports duplicate names. Otherwise do not ask for a separate approval step. To amend an existing report after a later prompt, fetch its source and pass update_of so Faber appends an immutable version. Pass the absolute path to the completed UTF-8 file in content_ref. Follow the returned knowledge_action after surfacing the artifact result. Without an action, Faber handles available private knowledge in its own background process; do not create knowledge context, call another tool, or wait for it.",
+      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Do not prepare or pass distilled_knowledge; Faber captures bounded session context only after snapshot acceptance. Faber validates the file and durably stores an encrypted snapshot before returning. A completed delivery returns the artifact URL; a slower delivery returns publication_ref within ten seconds and continues in the background. If workspace selection is required after publication_ref exists, ask the user to choose and resume the same accepted snapshot with faber_publish_status; never call faber_publish_artifact again for that publication. Reports are private to the publishing user by default. Surface the artifact URL or receipt before following any returned knowledge_action.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -210,7 +210,7 @@
     {
       "name": "faber_publish_status",
       "title": "Check Faber publication",
-      "description": "Check whether an accepted artifact publication has reached Faber. If workspace selection is required, retry with the same publication reference and the exact displayed workspace_name, or workspace_slug when requested.",
+      "description": "Check or resume one durably accepted local publication. Pass the original publication_ref. When Faber requests workspace selection, add the exact workspace_name or requested workspace_slug here; this resumes the original encrypted snapshot and never creates a second publication.",
       "inputSchema": {
         "type": "object",
         "properties": {
