@@ -189,7 +189,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 4096,
-            "description": "Absolute path to one local UTF-8 artifact file of at most 5 MiB. For a newly generated artifact, default to a uniquely named file under ~/.faber/staging. For an existing artifact, pass its original path directly from any local directory. Faber stores an encrypted local outbox snapshot until delivery; it never moves, rewrites, changes permissions on, or deletes the source file. Do not pass directories, symlinks, credential locations, or files containing secrets."
+            "description": "Absolute path to one local UTF-8 artifact file of at most 20 MiB. For a newly generated artifact, default to a uniquely named file under ~/.faber/staging. For an existing artifact, pass its original path directly from any local directory. Faber stores an encrypted local outbox snapshot until delivery; it never moves, rewrites, changes permissions on, or deletes the source file. Do not pass directories, symlinks, credential locations, or files containing secrets."
           }
         },
         "required": [
