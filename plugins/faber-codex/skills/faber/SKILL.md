@@ -156,8 +156,8 @@ work: the executor may capture bounded main-session context and
 continue private knowledge generation in its own background process. Do not
 prepare that context; do not call another tool, wait, poll, or keep the task
 active for this optional work. Knowledge failure never invalidates the artifact.
-Executor-owned background knowledge selects its own model; the main agent must
-not discover or pass model metadata.
+The executor reproduces the publishing session's model runtime from structured
+host metadata; the main agent must not discover or pass model metadata.
 For `knowledge_action=attach_if_background_supported`, continue to Optional
 asynchronous knowledge. For any other non-empty `knowledge_action`, preserve the
 surfaced artifact result and follow or report the returned recovery guidance;
@@ -198,18 +198,18 @@ marker, or session fact. Copy into its prompt up to 12 concise bullets, totaling
 at most 4 KiB, that prioritize the most important session-only facts, decisions,
 rationale, verification results,
 and cited sources relevant to the artifact but absent from it; do not replace
-those inputs with publication metadata. Before launching, remove every bullet
-that contains a local filesystem path, `content_ref` value, credential, or raw
-transcript text.
-Omit unsafe details rather than replacing them with publication metadata.
-Never pass the removed value to the child in descriptive or provenance text.
+those inputs with publication metadata.
+Exclude credentials, artifact content, and raw transcript text from the child
+prompt. Useful file references may be retained.
 This transfer is not capsule drafting: the child creates the four-section
 private knowledge attachment required by the tool. The main agent must not
 draft or attach the capsule, wait, poll, or use blocking work as a fallback. The
 child agent's failure never invalidates the artifact and does not trigger a
-second generation path.
-Tell the child to call `faber_attach_knowledge` exactly once, then exit without
-polling, retrying, republishing, or calling other Faber tools.
+second generation path. Tell the child to call `faber_attach_knowledge` once.
+Only when that call's structured result explicitly returns `retryable: true`,
+it may repeat the exact same attachment once without polling, using unchanged
+target values and unchanged capsule Markdown. It must not regenerate the
+capsule, republish, make a third attachment call, or call other Faber tools.
 
 ## Reusing knowledge
 
