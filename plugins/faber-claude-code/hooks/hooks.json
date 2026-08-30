@@ -1,5 +1,37 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/enforce-pre-tool-policy.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "faber_attach_knowledge$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/enforce-pre-tool-policy.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "faber_(publish_artifact|publish_status)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/launch-companion.sh\" hook PostToolUse",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [

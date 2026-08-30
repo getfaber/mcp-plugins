@@ -90,7 +90,9 @@ approval.
 Publish through the content source declared by the `faber_publish_artifact`
 tool supplied alongside this skill. Always prefer `content_ref` when it is
 advertised; otherwise pass inline `content`. Do not invent, substitute, or
-convert between content-source fields.
+convert between content-source fields. Do not prepare or pass
+`distilled_knowledge` to this tool; optional private knowledge begins only after
+the artifact or durable receipt is visible.
 
 Apply the declared capability to the source chosen above:
 
@@ -133,7 +135,9 @@ Handle exactly one result branch:
   reconnect or upgrade actions, preserve and surface any receipt before
   following the returned recovery guidance. Never choose a workspace on the
   user's behalf.
-- **Failed:** Report the publication failure and stop the publish path.
+- **Failed:** Report the returned `error_code`, `retryable`, and actionable
+  `detail`, then stop the publish path. Do not replace them with a generic retry
+  suggestion.
 
 Treat every result from `faber_publish_status` as a fresh publication result and
 route it through this section. Use that tool only when the user asks for status,
@@ -175,11 +179,14 @@ belongs to executor-owned knowledge. The artifact link or receipt must already
 be visible. Start at most one independent background task only when it already
 has the supplied `faber_attach_knowledge` tool without a new approval and does
 not keep the current task active or require waiting; otherwise skip knowledge.
+When the host supplies a dedicated background knowledge agent, invoke that
+agent exactly once. Otherwise use a native background child only when it
+satisfies the same tool, independence, and approval constraints.
 
-Use a native background child and select the host's inherit or same-as-parent
-model option. Do not choose a model identifier, launch another CLI process, or
-use a joined child. If the host cannot provide an inherited-model background
-child, skip optional knowledge for this publication.
+Use the host's inherit or same-as-parent model option. Do not choose a model
+identifier, launch another CLI process, or use a joined child. If the host
+cannot provide an inherited-model background agent, skip optional knowledge for
+this publication.
 
 Begin the background-task prompt with a `Target` block containing the exact
 target fields accepted by the supplied `faber_attach_knowledge` tool. Use only
@@ -196,10 +203,11 @@ that contains a local filesystem path, `content_ref` value, credential, or raw
 transcript text.
 Omit unsafe details rather than replacing them with publication metadata.
 Never pass the removed value to the child in descriptive or provenance text.
-This transfer is not capsule drafting: the child creates the four-section private
-knowledge attachment required by the tool. The main agent must not draft the
-capsule, wait, poll, or use blocking work as a fallback. The child agent's failure
-never invalidates the artifact and does not trigger a second generation path.
+This transfer is not capsule drafting: the child creates the four-section
+private knowledge attachment required by the tool. The main agent must not
+draft or attach the capsule, wait, poll, or use blocking work as a fallback. The
+child agent's failure never invalidates the artifact and does not trigger a
+second generation path.
 Tell the child to call `faber_attach_knowledge` exactly once, then exit without
 polling, retrying, republishing, or calling other Faber tools.
 

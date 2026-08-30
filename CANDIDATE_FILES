@@ -17,6 +17,11 @@
       "version_stamped": true
     },
     {
+      "path": "plugins/faber-claude-code/agents/faber-knowledge.md",
+      "mode": "0644",
+      "version_stamped": false
+    },
+    {
       "path": "plugins/faber-claude-code/bin/faber-companion_darwin_amd64",
       "mode": "0755",
       "version_stamped": false
@@ -39,6 +44,11 @@
     {
       "path": "plugins/faber-claude-code/hooks/hooks.json",
       "mode": "0644",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-claude-code/scripts/enforce-pre-tool-policy.sh",
+      "mode": "0755",
       "version_stamped": false
     },
     {
