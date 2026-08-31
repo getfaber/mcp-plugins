@@ -90,7 +90,7 @@ approval.
 Publish through the `content_ref` field declared by the
 `faber_publish_artifact` tool supplied alongside this skill.
 Do not prepare or pass `distilled_knowledge` to this tool; optional private
-knowledge begins only after the artifact or durable receipt is visible.
+knowledge begins only after the publication URL is visible.
 
 Apply the declared capability to the source chosen above:
 
@@ -103,56 +103,52 @@ Apply the declared capability to the source chosen above:
 
 For `content_ref`, Faber stores an encrypted local outbox snapshot until
 delivery. It never moves, rewrites, changes permissions on, or deletes the
-source file. Once a `content_ref` publication is accepted, never retry it
-through `faber_publish_artifact` or another publishing tool. Resume the retained
-snapshot only through `faber_publish_status` with the same `publication_ref`.
+source file. Once Faber returns a publication URL, never retry it through
+`faber_publish_artifact` or another publishing tool. Use that same URL for any
+explicit status or recovery call.
 Reports are private to the publishing user by default.
 
 ## Handle the publication result
 
 Handle exactly one result branch:
 
-- **Complete:** Surface the artifact link immediately.
-- **Pending:** A local `content_ref` publication returns a link within ten
-  seconds of durable snapshot acceptance or a `publication_ref` with
-  `status=pending` at the cap. Surface that durable receipt and report that
-  publication is continuing. Do not keep the task active merely to poll it.
+- **Complete:** Surface the artifact URL immediately.
+- **Pending:** A local `content_ref` publication returns a reserved Faber URL
+  within 20 seconds of durable snapshot acceptance. Surface that URL
+  immediately. The opened Faber page shows pending delivery and refreshes when
+  ready; do not poll or keep the task active.
 - **Action required:** Follow the returned action. For workspace choices, ask
   the user which named workspace should receive the artifact. Use the exact
   displayed name in `workspace_name`; use `workspace_slug` only when Faber
-  reports duplicate names. A result containing `publication_ref` means the
-  snapshot was accepted: surface that receipt before asking the user or making
-  another tool call, never call `faber_publish_artifact` again for that
-  publication, and resume it only through `faber_publish_status` with the
-  selector. Only when the result omits `publication_ref` may you retry
-  `faber_publish_artifact` with the same source file and metadata, adding
-  exactly the user-selected workspace selector when that action requires one.
-  For reconnect or upgrade actions, preserve and surface any receipt before
-  following the returned recovery guidance. Never choose a workspace on the
-  user's behalf.
+  reports duplicate names. Workspace selection happens before URL reservation,
+  so call `faber_publish_artifact` again with the same source and metadata plus
+  exactly the selected workspace field. Never choose a workspace on the user's
+  behalf. For an action returned with `publication_url`, surface that URL first
+  and follow the recovery guidance without republishing.
 - **Failed:** Report the returned `error_code`, `retryable`, and actionable
   `detail`, then stop the publish path. Do not replace them with a generic retry
   suggestion.
 
 Treat every result from `faber_publish_status` as a fresh publication result and
-route it through this section. Use that tool only when the user asks for status,
-an accepted publication requires recovery, or later knowledge work needs
-diagnostics. Do not wait for a pending publication to complete unless the user
-explicitly asks for status.
+route it through this section. Use that tool only when the user asks for status
+or recovery diagnostics are needed. Pass the original `publication_url`; do
+not wait for a pending publication to complete unless the user explicitly asks
+for status.
 "Surface" means the first user-visible opportunity: visible tool output when
 the host exposes it, otherwise an intermediate message when supported, or the
-first item in the final response. Never describe a pending receipt as a
-completed artifact link, and do not promise to surface a later link on a host
-without notifications.
+first item in the final response. A reserved URL may still show a publishing
+state when opened; describe it honestly without withholding the clickable URL.
 
-The publish tool's visible result surfaces its completed link or accepted
-receipt. A result without `knowledge_action` requires no agent-side knowledge
+The publish tool's visible result surfaces its Faber URL. A result without
+`knowledge_action` requires no agent-side knowledge
 work: the executor may capture bounded main-session context and
 continue private knowledge generation in its own background process. Do not
 prepare that context; do not call another tool, wait, poll, or keep the task
 active for this optional work. Knowledge failure never invalidates the artifact.
 The executor reproduces the publishing session's model runtime from structured
-host metadata; the main agent must not discover or pass model metadata.
+host metadata; the main agent must not discover or pass model metadata to select
+the background worker's runtime. This does not change the publication
+provenance guidance above.
 For `knowledge_action=attach_if_background_supported`, continue to Optional
 asynchronous knowledge. For any other non-empty `knowledge_action`, preserve the
 surfaced artifact result and follow or report the returned recovery guidance;
@@ -160,7 +156,7 @@ never retry or invalidate the completed publication because of optional
 knowledge.
 
 When status reports `knowledge_action=retry`, the artifact is already complete.
-Call `faber_retry_knowledge` once with the same `publication_ref`, surface that
+Call `faber_retry_knowledge` once with the same `publication_url`, surface that
 knowledge generation resumed, and do not poll unless the user later requests
 status. If retry is unavailable or expired, report that knowledge was not
 attached without republishing the artifact.
@@ -170,7 +166,7 @@ attached without republishing the artifact.
 This is the only agent-side knowledge branch. Follow it only when a completed
 artifact or durably accepted publication explicitly includes
 `knowledge_action=attach_if_background_supported`; a result without that action
-belongs to executor-owned knowledge. The artifact link or receipt must already
+belongs to executor-owned knowledge. The publication URL must already
 be visible. Start at most one independent background task only when it already
 has the supplied `faber_attach_knowledge` tool without a new approval and does
 not keep the current task active or require waiting; otherwise skip knowledge.
@@ -185,7 +181,7 @@ this publication.
 
 Begin the background-task prompt with a `Target` block containing the exact
 target fields accepted by the supplied `faber_attach_knowledge` tool. Use only
-`publication_ref` when that field is available; otherwise use the returned
+`publication_url` when that field is available; otherwise use the returned
 `artifact_id` and `version`, plus any returned workspace selector accepted by
 the tool. Tell the child to copy every target value into
 `faber_attach_knowledge`; it must never infer a target or workspace from a title,

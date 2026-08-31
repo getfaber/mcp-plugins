@@ -7,7 +7,11 @@
         "mcp"
       ],
       "env_vars": [
-        "CODEX_HOME"
+        "CODEX_HOME",
+        "CODEX_THREAD_ID",
+        "FABER_API_URL",
+        "FABER_APP_URL",
+        "FABER_COMPANION_DATA"
       ],
       "cwd": "."
     }

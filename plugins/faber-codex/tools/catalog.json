@@ -15,15 +15,15 @@
             "maxLength": 262144,
             "description": "Private session knowledge in Markdown with non-empty Outcome, Decisions and Rationale, Reusable Knowledge, and Verification headings."
           },
-          "publication_ref": {
+          "publication_url": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200,
-            "description": "Publication reference returned by faber_publish_artifact. Faber resolves it to the exact artifact version, including while publication is still pending."
+            "maxLength": 2000,
+            "description": "Publication URL returned by faber_publish_artifact. Faber resolves it to the exact version, including while delivery is pending."
           }
         },
         "required": [
-          "publication_ref",
+          "publication_url",
           "distilled_knowledge"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -112,7 +112,7 @@
     {
       "name": "faber_publish_artifact",
       "title": "Publish artifact to Faber",
-      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Do not prepare or pass distilled_knowledge; Faber captures bounded session context only after snapshot acceptance. Faber validates the file and durably stores an encrypted snapshot before returning. A completed delivery returns the artifact URL; a slower delivery returns publication_ref within ten seconds and continues in the background. If workspace selection is required after publication_ref exists, ask the user to choose and resume the same accepted snapshot with faber_publish_status; never call faber_publish_artifact again for that publication. Reports are private to the publishing user by default. Surface the artifact URL or receipt before following any returned knowledge_action.",
+      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Faber validates the file, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare or pass distilled_knowledge. Reports are private to the publishing user by default. Surface the URL before following any returned knowledge_action.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -210,31 +210,19 @@
     {
       "name": "faber_publish_status",
       "title": "Check Faber publication",
-      "description": "Check or resume one durably accepted local publication. Pass the original publication_ref. When Faber requests workspace selection, add the exact workspace_name or requested workspace_slug here; this resumes the original encrypted snapshot and never creates a second publication.",
+      "description": "Check one local publication by the URL returned from faber_publish_artifact. This is for explicit status requests and diagnostics; the opened Faber page tracks pending delivery automatically.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "workspace_name": {
-            "description": "Exact displayed workspace name used to resume a workspace_required publish.",
+          "publication_url": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 300
-          },
-          "workspace_slug": {
-            "description": "Displayed workspace slug used to resume only when names are duplicated.",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "publication_ref": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
-            "description": "Publication reference returned by faber_publish_artifact."
+            "maxLength": 2000,
+            "description": "Publication URL returned by faber_publish_artifact."
           }
         },
         "required": [
-          "publication_ref"
+          "publication_url"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       },
@@ -279,15 +267,15 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "publication_ref": {
+          "publication_url": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200,
-            "description": "Publication reference returned by faber_publish_artifact."
+            "maxLength": 2000,
+            "description": "Publication URL returned by faber_publish_artifact."
           }
         },
         "required": [
-          "publication_ref"
+          "publication_url"
         ]
       }
     },
