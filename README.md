@@ -22,11 +22,26 @@ claude plugin install faber-claude-code@faber-mcp-plugins
 
 Faber for Claude Code supports macOS and Linux on Intel/AMD and Arm processors.
 
+To update Faber for Claude Code, refresh the marketplace and update the plugin:
+
+```bash
+claude plugin marketplace update faber-mcp-plugins
+claude plugin update faber-claude-code@faber-mcp-plugins
+```
+
+Restart Claude Code to load the updated plugin version.
+
 ## Install on Claude Cowork
 
-Install **Faber for Cowork** from Claude's plugin browser when it is available
-through your organization or Anthropic's plugin directory. Organization
-administrators can distribute Faber through a managed plugin marketplace.
+1. Open the **Cowork** tab, then **Settings** and **Plugins**.
+2. Select **Add marketplace**.
+3. Choose **Add from a repository** and enter
+   `https://github.com/getfaber/mcp-plugins.git`.
+4. Install **Faber for Cowork** from the added marketplace.
+5. Use Faber and complete the browser sign-in prompt to connect your account.
+
+Team and Enterprise administrators can instead distribute Faber centrally
+through organization plugin settings.
 
 ## Install on Codex
 
