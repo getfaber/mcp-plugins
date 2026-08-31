@@ -1,12 +1,8 @@
 {
   "mcpServers": {
     "faber": {
-      "type": "http",
-      "url": "https://www.getfaber.app/mcp",
-      "headers": {
-        "X-Faber-Product": "claude-cowork",
-        "X-Faber-Product-Version": "0.1.18"
-      }
+      "command": "sh",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch-companion.sh", "mcp"]
     }
   }
 }

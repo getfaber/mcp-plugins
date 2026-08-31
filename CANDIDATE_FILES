@@ -139,11 +139,41 @@
     {
       "path": "plugins/faber-cowork/.mcp.json",
       "mode": "0644",
-      "version_stamped": true
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/agents/faber-knowledge.md",
+      "mode": "0644",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/bin/faber-companion_darwin_amd64",
+      "mode": "0755",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/bin/faber-companion_darwin_arm64",
+      "mode": "0755",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/bin/faber-companion_linux_amd64",
+      "mode": "0755",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/bin/faber-companion_linux_arm64",
+      "mode": "0755",
+      "version_stamped": false
     },
     {
       "path": "plugins/faber-cowork/hooks/hooks.json",
       "mode": "0644",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/scripts/launch-companion.sh",
+      "mode": "0755",
       "version_stamped": false
     },
     {
@@ -158,6 +188,11 @@
     },
     {
       "path": "plugins/faber-cowork/skills/faber/references/html-publishing.md",
+      "mode": "0644",
+      "version_stamped": false
+    },
+    {
+      "path": "plugins/faber-cowork/tools/catalog.json",
       "mode": "0644",
       "version_stamped": false
     }
