@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Agent$",
+        "matcher": "(Agent|Task)$",
         "hooks": [
           {
             "type": "command",
@@ -21,6 +21,16 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "(Agent|Task)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/launch-companion.sh\" hook PostToolUse",
+            "timeout": 2
+          }
+        ]
+      },
       {
         "matcher": "faber_(publish_artifact|publish_status)$",
         "hooks": [
