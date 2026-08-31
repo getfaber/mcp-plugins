@@ -29,7 +29,7 @@ PROTECTED_ROOTS = {
 }
 GIT_CONTROL_NAMES = {".git", ".gitignore", ".gitattributes", ".gitmodules"}
 MAX_DOWNLOAD_BYTES = 64 * 1024 * 1024
-MAX_EXTRACTED_BYTES = 96 * 1024 * 1024
+MAX_EXTRACTED_BYTES = 128 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 1024
 
 
@@ -169,7 +169,10 @@ def extract_safely(archive: Path, destination: Path) -> dict[str, int]:
                 fail(f"candidate file has an unexpected mode: {normalized}")
             extracted_bytes += member.size
             if extracted_bytes > MAX_EXTRACTED_BYTES:
-                fail("candidate expands beyond the size limit")
+                fail(
+                    f"candidate expands to {extracted_bytes} bytes, beyond the "
+                    f"{MAX_EXTRACTED_BYTES}-byte limit"
+                )
             target = destination.joinpath(*relative.parts)
             target.parent.mkdir(parents=True, exist_ok=True)
             source = bundle.extractfile(member)
@@ -395,7 +398,10 @@ def validate_revision(repo: Path, revision: str) -> None:
                     fail("open release branch contains a non-file entry")
                 total += member.size
                 if total > MAX_EXTRACTED_BYTES:
-                    fail("open release branch exceeds the size limit")
+                    fail(
+                        f"open release branch expands to {total} bytes, beyond the "
+                        f"{MAX_EXTRACTED_BYTES}-byte limit"
+                    )
                 target = checkout.joinpath(*relative.parts)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 source = bundle.extractfile(member)

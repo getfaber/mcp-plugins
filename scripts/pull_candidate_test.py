@@ -139,6 +139,26 @@ class CandidatePullTests(unittest.TestCase):
                     with self.assertRaises(SystemExit):
                         pull_candidate.extract_safely(archive, root / "payload")
 
+    def test_archive_enforces_cumulative_extracted_size_limit(self) -> None:
+        files = {
+            "plugins/faber/first": (b"1234", 0o644),
+            "plugins/faber/second": (b"5678", 0o644),
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = root / "candidate.tar.gz"
+            self._write_archive(archive, files)
+
+            with patch.object(pull_candidate, "MAX_EXTRACTED_BYTES", 8):
+                extracted = pull_candidate.extract_safely(archive, root / "accepted")
+            self.assertEqual(set(extracted), set(files))
+
+            with patch.object(pull_candidate, "MAX_EXTRACTED_BYTES", 7):
+                with self.assertRaises(SystemExit) as error:
+                    pull_candidate.extract_safely(archive, root / "rejected")
+            self.assertIn("expands to 8 bytes", str(error.exception))
+            self.assertIn("7-byte limit", str(error.exception))
+
     def test_local_candidate_size_is_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -322,9 +342,10 @@ class CandidatePullTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 pull_candidate.verify_public_candidate(repo)
 
-    def test_candidate_limits_allow_larger_extracted_plugin_set(self) -> None:
+    def test_candidate_limits_allow_three_binary_plugin_sets(self) -> None:
         self.assertEqual(pull_candidate.MAX_DOWNLOAD_BYTES, 64 * 1024 * 1024)
-        self.assertEqual(pull_candidate.MAX_EXTRACTED_BYTES, 96 * 1024 * 1024)
+        self.assertEqual(pull_candidate.MAX_EXTRACTED_BYTES, 128 * 1024 * 1024)
+        self.assertEqual(pull_candidate.MAX_ARCHIVE_MEMBERS, 1024)
 
     def test_update_rejects_collision_with_public_owned_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
