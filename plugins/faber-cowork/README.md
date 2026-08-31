@@ -6,10 +6,15 @@ build on earlier results while preserving lineage.
 
 ## Install
 
-Install **Faber for Cowork** from Claude's plugin browser when it is available
-through your organization or Anthropic's plugin directory. Organization
-administrators can distribute Faber through a managed plugin marketplace.
+1. Open the **Cowork** tab, then **Settings** and **Plugins**.
+2. Select **Add marketplace**.
+3. Choose **Add from a repository** and enter
+   `https://github.com/getfaber/mcp-plugins.git`.
+4. Install **Faber for Cowork** from the added marketplace.
+5. Use Faber and complete the browser sign-in prompt to connect your account.
 
-When Cowork first uses Faber, follow Claude's connector sign-in prompt. Cowork
-and Claude Code can authorize the same Faber account and workspace. Ordinary
-plugin updates preserve the connection.
+Team and Enterprise administrators can instead distribute Faber centrally
+through organization plugin settings.
+
+Cowork and Claude Code can authorize the same Faber account and workspace.
+Ordinary plugin updates preserve the connection.
