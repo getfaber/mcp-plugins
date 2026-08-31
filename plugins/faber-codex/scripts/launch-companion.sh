@@ -25,4 +25,7 @@ fi
 export FABER_PRODUCT=codex
 export FABER_PRODUCT_VERSION=$version
 export FABER_MCP_TOOL_CATALOG="$plugin_root/tools/catalog.json"
+export FABER_PUBLISH_SOURCE=local-file-ref
+export FABER_KNOWLEDGE_MODE=companion-worker
+export FABER_SESSION_ADAPTER=codex-jsonl
 exec "$companion" "$@"

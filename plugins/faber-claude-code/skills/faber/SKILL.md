@@ -75,11 +75,11 @@ Choose the publish source before doing any preparation:
 
 ## Publishing
 
-Follow the declared content-source field's eligibility, byte-limit, and
-oversize guidance. Never truncate or split without the user's direction, and
-never publish directories, symlinks, credential locations, or files containing
-secrets. Self-contained HTML is the default; requested single-file text formats
-remain supported.
+Follow the `content_ref` field's eligibility, byte-limit, and oversize guidance.
+Never truncate or split without the user's direction, and never publish
+directories, symlinks, credential locations, or files containing secrets.
+Self-contained HTML is the default; requested single-file text formats remain
+supported.
 
 Publish one regular UTF-8 file. An explicit request to publish to Faber also
 authorizes its bounded private knowledge sidecar. Treat them as one operation
@@ -87,29 +87,24 @@ and do not ask for another Faber-specific confirmation. Artifact publication
 remains an external write in native host approval UI; do not suppress that
 approval.
 
-Publish through the content source declared by the `faber_publish_artifact`
-tool supplied alongside this skill. Always prefer `content_ref` when it is
-advertised; otherwise pass inline `content`. Do not invent, substitute, or
-convert between content-source fields. Do not prepare or pass
-`distilled_knowledge` to this tool; optional private knowledge begins only after
-the artifact or durable receipt is visible.
+Publish through the `content_ref` field declared by the
+`faber_publish_artifact` tool supplied alongside this skill.
+Do not prepare or pass `distilled_knowledge` to this tool; optional private
+knowledge begins only after the artifact or durable receipt is visible.
 
 Apply the declared capability to the source chosen above:
 
-- **Existing artifact:** If the schema advertises `content_ref`, resolve and
-  pass the existing file's absolute path directly. Otherwise, if it advertises
-  `content`, read and pass the exact file contents. Never stage or rewrite an
-  existing artifact.
-- **Retrieved or new artifact:** If the schema advertises `content_ref`, prefer
-  a uniquely named file in the host-resolved user home directory's
-  `.faber/staging` folder when that location is writable; otherwise use another
-  eligible host-writable local path. Pass its absolute path. Otherwise, if the
-  schema advertises `content`, pass the completed content inline.
+- **Existing artifact:** Resolve and pass the existing file's absolute path
+  directly. Never stage or rewrite an existing artifact.
+- **Retrieved or new artifact:** Prefer a uniquely named file in the
+  host-resolved user home directory's `.faber/staging` folder. Pass its absolute
+  path. If that location cannot be written or accessed, report the local-access
+  failure and stop; do not switch to another publishing method.
 
 For `content_ref`, Faber stores an encrypted local outbox snapshot until
 delivery. It never moves, rewrites, changes permissions on, or deletes the
 source file. Once a `content_ref` publication is accepted, never retry it
-through `faber_publish_artifact` or an inline or remote tool. Resume the retained
+through `faber_publish_artifact` or another publishing tool. Resume the retained
 snapshot only through `faber_publish_status` with the same `publication_ref`.
 Reports are private to the publishing user by default.
 
@@ -130,9 +125,9 @@ Handle exactly one result branch:
   another tool call, never call `faber_publish_artifact` again for that
   publication, and resume it only through `faber_publish_status` with the
   selector. Only when the result omits `publication_ref` may you retry
-  `faber_publish_artifact` with the same content and metadata, adding exactly
-  the user-selected workspace selector when that action requires one. For
-  reconnect or upgrade actions, preserve and surface any receipt before
+  `faber_publish_artifact` with the same source file and metadata, adding
+  exactly the user-selected workspace selector when that action requires one.
+  For reconnect or upgrade actions, preserve and surface any receipt before
   following the returned recovery guidance. Never choose a workspace on the
   user's behalf.
 - **Failed:** Report the returned `error_code`, `retryable`, and actionable
@@ -199,8 +194,14 @@ at most 4 KiB, that prioritize the most important session-only facts, decisions,
 rationale, verification results,
 and cited sources relevant to the artifact but absent from it; do not replace
 those inputs with publication metadata.
-Exclude credentials, artifact content, and raw transcript text from the child
-prompt. Useful file references may be retained.
+Before launching the child, review those bullets and remove operational publish
+details: local paths or file references, artifact content, artifact IDs, URLs,
+publication references, workspace selectors, capability fields, and publication
+status. Here, URLs means Faber artifact, publication, workspace, and other
+operational links; preserve cited public HTTP or HTTPS evidence links. The exact
+target belongs only in the `Target` block. Also remove credentials and raw
+transcript text. If no safe session-only bullet remains, skip optional knowledge
+instead of passing operational metadata.
 This transfer is not capsule drafting: the child creates the four-section
 private knowledge attachment required by the tool. The main agent must not
 draft or attach the capsule, wait, poll, or use blocking work as a fallback. The

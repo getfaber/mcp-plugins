@@ -2,7 +2,7 @@
 name: faber-knowledge
 description: Attach bounded private session knowledge after a Faber artifact result is visible.
 tools:
-  - mcp__plugin_faber-claude-code_faber__faber_attach_knowledge
+  - mcp__plugin_faber-cowork_faber__faber_attach_knowledge
 model: inherit
 background: true
 maxTurns: 5
