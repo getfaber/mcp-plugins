@@ -137,7 +137,12 @@ for status.
 "Surface" means the first user-visible opportunity: visible tool output when
 the host exposes it, otherwise an intermediate message when supported, or the
 first item in the final response. A reserved URL may still show a publishing
-state when opened; describe it honestly without withholding the clickable URL.
+state when opened.
+
+For a successful complete or pending publication, the user-facing response must
+contain only the bare Faber URL and nothing else. Do not add a Markdown label,
+title, workspace, status explanation, recap, or knowledge-sidecar note. This
+does not suppress a required action or a concise failure response.
 
 The publish tool's visible result surfaces its Faber URL. A result without
 `knowledge_action` requires no agent-side knowledge
