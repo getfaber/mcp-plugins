@@ -12,6 +12,9 @@ branch="release/v$version"
 head_sha="$(printf 'a%.0s' {1..40})"
 export FAKE_VERSION="$version" FAKE_CANDIDATE="$candidate_id" FAKE_HEAD_SHA="$head_sha"
 export FAKE_REPOSITORY="example/plugin-mirror"
+export FAKE_SERVER_URL="https://github.example"
+export FAKE_RUN_ID="123456789"
+export FAKE_BODY="$temporary/body"
 export REAL_PYTHON3="$(command -v python3)"
 
 cat > "$fake_bin/git" <<'SH'
@@ -56,6 +59,13 @@ SH
 cat > "$fake_bin/gh" <<'SH'
 #!/bin/sh
 printf 'gh %s\n' "$*" >> "$FAKE_LOG"
+previous=""
+for argument in "$@"; do
+  if [ "$previous" = "--body-file" ]; then
+    cp "$argument" "$FAKE_BODY"
+  fi
+  previous="$argument"
+done
 case "$*" in
   "pr list --state open --json headRefName"*)
     printf '%s' "${FAKE_OPEN_RELEASES:-}"
@@ -84,13 +94,15 @@ SH
 chmod +x "$fake_bin/git" "$fake_bin/python3" "$fake_bin/gh"
 
 run_publisher() {
-  FAKE_LOG="$1" GITHUB_OUTPUT="${2:-}" GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" \
+  FAKE_LOG="$1" GITHUB_OUTPUT="${2:-}" GITHUB_REPOSITORY="$FAKE_REPOSITORY" \
+    GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" PATH="$fake_bin:$PATH" \
     "$root/scripts/publish_candidate_pr.sh" "$version" "$candidate_id"
 }
 
 log="$temporary/calls"
 outputs="$temporary/outputs"
 run_publisher "$log" "$outputs"
+grep -Fq "git commit -m Release Faber MCP plugins v$version [skip ci]" "$log"
 grep -Fq "git push --set-upstream origin $branch" "$log"
 grep -Fq 'python3 scripts/pull_candidate.py --repo . --verify-revision HEAD' "$log"
 grep -Fq 'python3 scripts/pull_candidate.py --repo . --verify-revision FETCH_HEAD' "$log"
@@ -102,13 +114,17 @@ grep -Fq 'pr_number=7' "$outputs"
 grep -Fq "release_branch=$branch" "$outputs"
 grep -Fq "candidate_id=$candidate_id" "$outputs"
 grep -Fq "head_sha=$head_sha" "$outputs"
+grep -Fq "Validated candidate digest: \`$candidate_id\`." "$FAKE_BODY"
+grep -Fq "[the parent mirror workflow run]($FAKE_SERVER_URL/$FAKE_REPOSITORY/actions/runs/$FAKE_RUN_ID)" "$FAKE_BODY"
+grep -Fq 'generated commit intentionally skips the redundant pull-request workflow' "$FAKE_BODY"
 
 : > "$log"
 existing_sha="$(printf '1%.0s' {1..40})"
 existing_pr="$(printf '{"number":7,"isDraft":false,"author":{"login":"github-actions[bot]"},"baseRefName":"main","headRefName":"%s","headRepository":{"nameWithOwner":"%s"}}' "$branch" "$FAKE_REPOSITORY")"
 existing_view="$(printf '{"number":7,"isDraft":false,"author":{"login":"github-actions[bot]"},"baseRefName":"main","headRefName":"%s","headRefOid":"%s","headRepository":{"nameWithOwner":"%s"},"mergeable":"MERGEABLE"}' "$branch" "$head_sha" "$FAKE_REPOSITORY")"
 FAKE_LOG="$log" FAKE_OPEN_RELEASES="$branch" FAKE_EXISTING_SHA="$existing_sha" \
-FAKE_PR="$existing_pr" FAKE_VIEW="$existing_view" GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" \
+FAKE_PR="$existing_pr" FAKE_VIEW="$existing_view" GITHUB_REPOSITORY="$FAKE_REPOSITORY" \
+GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" PATH="$fake_bin:$PATH" \
   "$root/scripts/publish_candidate_pr.sh" "$version" "$candidate_id"
 grep -Fq "git push --force-with-lease=refs/heads/$branch:$existing_sha origin $branch" "$log"
 grep -Fq 'gh pr edit 7' "$log"
@@ -122,7 +138,8 @@ assert_rejected() {
   expected="$2"
   shift 2
   : > "$log"
-  if env FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" "$@" \
+  if env FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" \
+    GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" PATH="$fake_bin:$PATH" "$@" \
     "$root/scripts/publish_candidate_pr.sh" "$version" "$candidate_id" \
     >"$temporary/$name.out" 2>&1; then
     echo "publisher accepted $name" >&2
@@ -189,7 +206,8 @@ if grep -Fq "git push origin --delete $branch" "$log"; then
 fi
 
 : > "$log"
-FAKE_LOG="$log" FAKE_DELETE_FAIL=1 GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" \
+FAKE_LOG="$log" FAKE_DELETE_FAIL=1 GITHUB_REPOSITORY="$FAKE_REPOSITORY" \
+GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" PATH="$fake_bin:$PATH" \
   "$root/scripts/publish_candidate_pr.sh" "$version" "$candidate_id"
 grep -Fq "git ls-remote --exit-code --heads origin refs/heads/$branch" "$log"
 
@@ -199,7 +217,8 @@ assert_rejected branch-cleanup-lookup 'Could not verify merged release branch cl
   FAKE_DELETE_FAIL=1 FAKE_BRANCH_LOOKUP_ERROR=1
 
 : > "$log"
-if FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" \
+if FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" \
+  GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" PATH="$fake_bin:$PATH" \
   "$root/scripts/publish_candidate_pr.sh" 9.9.9 "$candidate_id" \
   >"$temporary/version.out" 2>&1; then
   echo "publisher accepted a mismatched tree version" >&2
@@ -208,7 +227,8 @@ fi
 grep -Fq 'release version does not match the validated tree' "$temporary/version.out"
 
 : > "$log"
-if FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" \
+if FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" \
+  GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" PATH="$fake_bin:$PATH" \
   "$root/scripts/publish_candidate_pr.sh" "$version" "$(printf 'b%.0s' {1..64})" \
   >"$temporary/candidate.out" 2>&1; then
   echo "publisher accepted a mismatched candidate" >&2
@@ -216,7 +236,8 @@ if FAKE_LOG="$log" GITHUB_REPOSITORY="$FAKE_REPOSITORY" PATH="$fake_bin:$PATH" \
 fi
 grep -Fq 'candidate ID does not match the validated tree' "$temporary/candidate.out"
 
-if env -u GITHUB_REPOSITORY "$root/scripts/publish_candidate_pr.sh" "$version" "$candidate_id" \
+if env -u GITHUB_REPOSITORY GITHUB_SERVER_URL="$FAKE_SERVER_URL" GITHUB_RUN_ID="$FAKE_RUN_ID" \
+  "$root/scripts/publish_candidate_pr.sh" "$version" "$candidate_id" \
   >"$temporary/repository.out" 2>&1; then
   echo "publisher accepted a missing repository identity" >&2
   exit 1
