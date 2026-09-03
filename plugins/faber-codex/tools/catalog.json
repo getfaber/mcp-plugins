@@ -3,17 +3,342 @@
   "instructions": "Use Faber to publish durable artifacts and reuse accessible team knowledge. For a report or document, default to a polished, self-contained static HTML artifact unless the user requests another format. Make HTML easy to read: lead with a clear title and short orientation; use semantic HTML and a clear heading hierarchy; use responsive layout; and include a compact sidebar in every artifact (anchored navigation for multi-section reports, or a concise context/summary panel for short ones). Preserve substantive facts and caveats. Keep artifacts portable and private: do not use JavaScript, external CSS, network requests, remote fonts, or external assets, and never include secrets, raw transcript text, or private session details. These HTML and sidebar guidelines do not apply to code, datasets, or an explicitly requested alternate format.",
   "tools": [
     {
-      "name": "faber_attach_knowledge",
-      "title": "Attach private knowledge to a Faber artifact",
-      "description": "Attach distilled private session knowledge to a publication when requested by knowledge_action or needed for recovery. The attachment waits for the exact published artifact version, does not create a version, and is first-write-wins.",
+      "name": "faber_attach_context",
+      "title": "Attach context to a Faber artifact",
+      "description": "Attach one structured Context Capsule v2, distilled from bounded session-only information, only when a successful publication explicitly returns context_action=attach_if_background_supported. The attachment waits for the exact published artifact version, does not create a version, and is first-write-wins. Use faber_retry_context for recovery after failed background generation.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "distilled_knowledge": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 262144,
-            "description": "Private session knowledge in Markdown with non-empty Outcome, Decisions and Rationale, Reusable Knowledge, and Verification headings."
+          "context_capsule": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "number",
+                "const": 2
+              },
+              "outcome": {
+                "type": "object",
+                "properties": {
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "details": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source_ids": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    }
+                  }
+                },
+                "required": [
+                  "summary"
+                ],
+                "additionalProperties": {}
+              },
+              "decisions": {
+                "maxItems": 12,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "summary": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "rationale": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "alternatives": {
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "tradeoffs": {
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "source_ids": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "summary",
+                    "rationale"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "know_how": {
+                "maxItems": 12,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "procedure",
+                        "lesson"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "summary": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "steps": {
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "applies_when": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "caveats": {
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "source_ids": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "title",
+                    "summary"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "evidence": {
+                "maxItems": 12,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "claim": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "method": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "result": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "passed",
+                        "failed",
+                        "inconclusive",
+                        "not_run"
+                      ]
+                    },
+                    "source_ids": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "claim",
+                    "result",
+                    "status"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "sources": {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "url": {
+                      "type": "string",
+                      "maxLength": 2000,
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "url"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "extensions": {
+                "default": [],
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80,
+                            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "summary": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "details": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "source_ids": {
+                            "maxItems": 20,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80,
+                              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "summary"
+                        ],
+                        "additionalProperties": {}
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "items"
+                  ],
+                  "additionalProperties": {}
+                }
+              }
+            },
+            "required": [
+              "schema_version",
+              "outcome",
+              "decisions",
+              "know_how",
+              "evidence",
+              "sources"
+            ],
+            "additionalProperties": {},
+            "description": "Structured Context Capsule v2 generated from bounded session-only information. Preserve decisions, rationale, alternatives, procedures, lessons, verification limits, and cited public sources."
           },
           "publication_url": {
             "type": "string",
@@ -24,9 +349,10 @@
         },
         "required": [
           "publication_url",
-          "distilled_knowledge"
+          "context_capsule"
         ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
       },
       "annotations": {
         "readOnlyHint": false,
@@ -63,7 +389,7 @@
     {
       "name": "faber_get_artifact",
       "title": "Get artifact source from Faber",
-      "description": "Fetch one accessible version of a Faber artifact with its source and shareable provenance. Accepts a UUID or pasted Faber URL; a URL with ?version=N always fetches that exact checkpoint. Private session knowledge is not returned. Use update_of when revising the same artifact and derived_from plus derived_from_version for distinct work.",
+      "description": "Fetch one accessible version of a Faber artifact with its source and shareable provenance. Accepts a UUID or pasted Faber URL; a URL with ?version=N always fetches that exact checkpoint. The separately attached Context Capsule is not returned by this tool. Use update_of when revising the same artifact and derived_from plus derived_from_version for distinct work.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -112,7 +438,7 @@
     {
       "name": "faber_publish_artifact",
       "title": "Publish artifact to Faber",
-      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Faber validates the file, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare or pass distilled_knowledge. Reports are private to the publishing user by default. Surface the URL before following any returned knowledge_action.",
+      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Faber validates the file, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare or pass context_capsule. Reports are private to the publishing user by default. For the main agent's initial successful complete or pending response, return only the bare Faber URL: no progress narration, label, recap, workspace or status prose, or Context note. Follow any returned context_action only after surfacing that URL.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -224,7 +550,8 @@
         "required": [
           "publication_url"
         ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
       },
       "execution": {
         "taskSupport": "forbidden"
@@ -261,8 +588,8 @@
       }
     },
     {
-      "name": "faber_retry_knowledge",
-      "description": "Retry failed background knowledge generation for an already completed local publication while its encrypted session handoff is still retained. This never republishes or versions the artifact.",
+      "name": "faber_retry_context",
+      "description": "Retry failed background context generation for an already completed local publication while its encrypted session handoff is still retained. This never republishes or versions the artifact.",
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
