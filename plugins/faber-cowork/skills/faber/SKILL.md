@@ -128,8 +128,9 @@ Handle exactly one result branch:
   within 20 seconds of durable snapshot acceptance. Surface that URL
   immediately. The opened Faber page shows pending delivery and refreshes when
   ready; do not poll or keep the task active.
-- **Action required:** Follow the returned action. For workspace choices, ask
-  the user which named workspace should receive the artifact. Use the exact
+- **Action required:** Follow the returned action. If there are workspace choices,
+  ask the user which named workspace should receive the artifact and show the
+  existing workspace names as options with the question. Use the exact
   displayed name in `workspace_name`; use `workspace_slug` only when Faber
   reports duplicate names. Workspace selection happens before URL reservation,
   so call `faber_publish_artifact` again with the same source and metadata plus
@@ -146,13 +147,11 @@ or recovery diagnostics are needed. Pass the original `publication_url`; do
 not wait for a pending publication to complete unless the user explicitly asks
 for status.
 For the initial successful complete or pending publication, the main agent's
-response must contain only the bare Faber URL. Do not narrate progress before or
-during the tool call, and do not add a Markdown label, title, workspace, status
-explanation, recap, or Context-sidecar note afterward. The tool's visible URL is
+response must contain only the bare Faber URL. Do not add any other narration
+or description about how the tools work. The tool's visible URL is
 sufficient when the host exposes it; otherwise return that URL as the sole
-response. A reserved URL may still show a publishing state when opened. This
-does not suppress a required workspace-selection action, a concise failure
-response, a background child's attachment status, or a later user-requested
+response. This does not suppress a required workspace-selection action, a concise
+failure response, a background child's attachment status, or a later user-requested
 status or Context recovery response.
 
 The publish tool's visible result surfaces its Faber URL. A result without
