@@ -23,7 +23,7 @@ Route the request before doing any artifact preparation:
   stop or ask the user to choose; never fall through to new-artifact creation.
 - **Publish without retrieval:** Continue with Choose the publish source.
 
-At a high-confidence substantive new-task boundary, Reusing knowledge may also
+At a high-confidence substantive new-task boundary, Reusing context may also
 provide proactive context without turning the request into a publish operation.
 
 ## Preflight
@@ -31,7 +31,7 @@ provide proactive context without turning the request into a publish operation.
 Use only the Faber tools supplied alongside this skill and follow their schemas.
 If a required tool is unavailable or unhealthy, report that the operation
 cannot continue; do not substitute another app, connector, or similarly named
-tool. Optional recall and knowledge must remain fail-open.
+tool. Optional recall and Context capture must remain fail-open.
 
 For a user-requested Faber operation, call `faber_connect` when it is available
 and either setup is requested or a required Faber tool reports that sign-in is
@@ -55,9 +55,12 @@ and `derived_from_version`.
 Choose the publish source before doing any preparation:
 
 - **Existing local artifact:** When the user identifies an existing artifact by
-  local name or path, resolve its absolute path and use that file as the source.
-  Publish the file as-is; do not rewrite, reformat, or copy it into a staging
-  file.
+  local name or path and asks to publish it unchanged, resolve its absolute path
+  and use that file as the source. Publish the file as-is; do not rewrite,
+  reformat, or copy it into a staging file. When the user explicitly asks to
+  modify that local file before publishing, make only the requested edits in
+  the original file, then publish that same absolute path; create a separate
+  copy only when the user asks to preserve the original.
 - **Retrieved Faber artifact:** Use the exact fetched source as the starting
   point, apply the user's requested changes before publishing an amendment or
   derived artifact, and preserve the fetched checkpoint's lineage. If the user
@@ -68,10 +71,10 @@ Choose the publish source before doing any preparation:
 
 ## Prepare a new artifact
 
-1. Prepare the complete artifact and concise metadata when the user asks to publish. Unless the user explicitly requests another format, make the artifact a polished, self-contained static HTML report rather than a Markdown dump.
+1. Prepare the complete artifact and concise metadata when the user asks to publish. For a report or document, use a polished, self-contained static HTML report rather than a Markdown dump unless the user requests another format. Preserve an appropriate native single-file format for code, datasets, prompts, and other non-report artifacts.
 2. For HTML, follow `references/html-publishing.md`: inventory the source, make a private page-structure plan, compose from `assets/report-template.html`, validate, and only then publish. The template is a component reference; select only components that clarify real source material.
 3. Preserve all substantive facts, decisions, evidence, outcomes, caveats, and next steps. Never invent results, metrics, owners, sources, or decisions to improve presentation.
-4. Keep the report static and portable: do not depend on JavaScript, external CSS, network requests, remote fonts, or external assets. Never put secrets or raw transcripts in either output. Keep private session details out of the artifact; only bounded, distilled reusable knowledge belongs in the private attachment.
+4. Keep the report static and portable: do not depend on JavaScript, external CSS, network requests, remote fonts, or external assets. Never put secrets, raw transcripts, or audience-inappropriate details in either output. Context may preserve bounded session-only rationale and evidence, but it inherits the artifact's visibility, so include only distilled facts appropriate for everyone who can view the artifact.
 
 ## Publishing
 
@@ -81,21 +84,29 @@ directories, symlinks, credential locations, or files containing secrets.
 Self-contained HTML is the default; requested single-file text formats remain
 supported.
 
+Before publishing any source, including an existing local file, check that it
+does not contain raw transcript material, private session details, credentials,
+or other content inappropriate for everyone who will be able to view the
+artifact. Stop and explain the concern rather than silently rewriting an
+existing source.
+
 Publish one regular UTF-8 file. An explicit request to publish to Faber also
-authorizes its bounded private knowledge sidecar. Treat them as one operation
-and do not ask for another Faber-specific confirmation. Artifact publication
-remains an external write in native host approval UI; do not suppress that
-approval.
+authorizes its bounded artifact-scoped Context sidecar. Context inherits the
+artifact's visibility, so capture only facts appropriate for the artifact's full
+audience. Treat them as one operation and do not ask for another Faber-specific
+confirmation. Artifact publication remains an external write in native host
+approval UI; do not suppress that approval.
 
 Publish through the `content_ref` field declared by the
 `faber_publish_artifact` tool supplied alongside this skill.
-Do not prepare or pass `distilled_knowledge` to this tool; optional private
-knowledge begins only after the publication URL is visible.
+Do not prepare or pass `context_capsule` to this tool; optional Context
+capture begins only after the publication URL is visible.
 
 Apply the declared capability to the source chosen above:
 
 - **Existing artifact:** Resolve and pass the existing file's absolute path
-  directly. Never stage or rewrite an existing artifact.
+  directly. Never stage it or rewrite it unless the user explicitly requested
+  those edits before publishing.
 - **Retrieved or new artifact:** Prefer a uniquely named file in the
   host-resolved user home directory's `.faber/staging` folder. Pass its absolute
   path. If that location cannot be written or accessed, report the local-access
@@ -134,86 +145,88 @@ route it through this section. Use that tool only when the user asks for status
 or recovery diagnostics are needed. Pass the original `publication_url`; do
 not wait for a pending publication to complete unless the user explicitly asks
 for status.
-"Surface" means the first user-visible opportunity: visible tool output when
-the host exposes it, otherwise an intermediate message when supported, or the
-first item in the final response. A reserved URL may still show a publishing
-state when opened.
-
-For a successful complete or pending publication, the user-facing response must
-contain only the bare Faber URL and nothing else. Do not add a Markdown label,
-title, workspace, status explanation, recap, or knowledge-sidecar note. This
-does not suppress a required action or a concise failure response.
+For the initial successful complete or pending publication, the main agent's
+response must contain only the bare Faber URL. Do not narrate progress before or
+during the tool call, and do not add a Markdown label, title, workspace, status
+explanation, recap, or Context-sidecar note afterward. The tool's visible URL is
+sufficient when the host exposes it; otherwise return that URL as the sole
+response. A reserved URL may still show a publishing state when opened. This
+does not suppress a required workspace-selection action, a concise failure
+response, a background child's attachment status, or a later user-requested
+status or Context recovery response.
 
 The publish tool's visible result surfaces its Faber URL. A result without
-`knowledge_action` requires no agent-side knowledge
+`context_action` requires no agent-side Context
 work: the executor may capture bounded main-session context and
-continue private knowledge generation in its own background process. Do not
+continue Context generation in its own background process. Do not
 prepare that context; do not call another tool, wait, poll, or keep the task
-active for this optional work. Knowledge failure never invalidates the artifact.
+active for this optional work. Context failure never invalidates the artifact.
 The executor reproduces the publishing session's model runtime from structured
 host metadata; the main agent must not discover or pass model metadata to select
 the background worker's runtime. This does not change the publication
 provenance guidance above.
-For `knowledge_action=attach_if_background_supported`, continue to Optional
-asynchronous knowledge. For any other non-empty `knowledge_action`, preserve the
+For `context_action=attach_if_background_supported`, continue to Optional
+asynchronous Context. For any other non-empty `context_action`, preserve the
 surfaced artifact result and follow or report the returned recovery guidance;
 never retry or invalidate the completed publication because of optional
-knowledge.
+Context.
 
-When status reports `knowledge_action=retry`, the artifact is already complete.
-Call `faber_retry_knowledge` once with the same `publication_url`, surface that
-knowledge generation resumed, and do not poll unless the user later requests
-status. If retry is unavailable or expired, report that knowledge was not
+When status reports `context_action=retry`, the artifact is already complete.
+Call `faber_retry_context` once with the same `publication_url`, surface that
+Context generation resumed, and do not poll unless the user later requests
+status. If retry is unavailable or expired, report that Context was not
 attached without republishing the artifact.
 
-## Optional asynchronous knowledge
+## Optional asynchronous Context
 
-This is the only agent-side knowledge branch. Follow it only when a completed
+This is the only agent-side Context branch. Follow it only when a completed
 artifact or durably accepted publication explicitly includes
-`knowledge_action=attach_if_background_supported`; a result without that action
-belongs to executor-owned knowledge. The publication URL must already
+`context_action=attach_if_background_supported`; a result without that action
+belongs to executor-owned Context. The publication URL must already
 be visible. Start at most one independent background task only when it already
-has the supplied `faber_attach_knowledge` tool without a new approval and does
-not keep the current task active or require waiting; otherwise skip knowledge.
-When the host supplies a dedicated background knowledge agent, invoke that
+has the supplied `faber_attach_context` tool without a new approval and does
+not keep the current task active or require waiting; otherwise skip Context.
+When the host supplies a dedicated background Context agent, invoke that
 agent exactly once. Otherwise use a native background child only when it
 satisfies the same tool, independence, and approval constraints.
 
 Use the host's inherit or same-as-parent model option. Do not choose a model
 identifier, launch another CLI process, or use a joined child. If the host
-cannot provide an inherited-model background agent, skip optional knowledge for
+cannot provide an inherited-model background agent, skip optional Context for
 this publication.
 
 Begin the background-task prompt with a `Target` block containing the exact
-target fields accepted by the supplied `faber_attach_knowledge` tool. Use only
+target fields accepted by the supplied `faber_attach_context` tool. Use only
 `publication_url` when that field is available; otherwise use the returned
 `artifact_id` and `version`, plus any returned workspace selector accepted by
 the tool. Tell the child to copy every target value into
-`faber_attach_knowledge`; it must never infer a target or workspace from a title,
+`faber_attach_context`; it must never infer a target or workspace from a title,
 marker, or session fact. Copy into its prompt up to 12 concise bullets, totaling
 at most 4 KiB, that prioritize the most important session-only facts, decisions,
 rationale, verification results,
 and cited sources relevant to the artifact but absent from it; do not replace
-those inputs with publication metadata.
+those inputs with publication metadata. Every bullet must be appropriate for
+the artifact's full audience because the completed Context Capsule inherits the
+artifact's visibility.
 Before launching the child, review those bullets and remove operational publish
 details: local paths or file references, artifact content, artifact IDs, URLs,
 publication references, workspace selectors, capability fields, and publication
 status. Here, URLs means Faber artifact, publication, workspace, and other
 operational links; preserve cited public HTTP or HTTPS evidence links. The exact
 target belongs only in the `Target` block. Also remove credentials and raw
-transcript text. If no safe session-only bullet remains, skip optional knowledge
+transcript text. If no safe session-only bullet remains, skip optional Context
 instead of passing operational metadata.
-This transfer is not capsule drafting: the child creates the four-section
-private knowledge attachment required by the tool. The main agent must not
+This transfer is not capsule drafting: the child creates the structured
+Context Capsule v2 attachment required by the tool. The main agent must not
 draft or attach the capsule, wait, poll, or use blocking work as a fallback. The
 child agent's failure never invalidates the artifact and does not trigger a
-second generation path. Tell the child to call `faber_attach_knowledge` once.
+second generation path. Tell the child to call `faber_attach_context` once.
 Only when that call's structured result explicitly returns `retryable: true`,
 it may repeat the exact same attachment once without polling, using unchanged
-target values and unchanged capsule Markdown. It must not regenerate the
+target values and unchanged capsule JSON. It must not regenerate the
 capsule, republish, make a third attachment call, or call other Faber tools.
 
-## Reusing knowledge
+## Reusing context
 
 At a high-confidence substantive new-task boundary, call `faber_context` once
 with the task description. Use `faber_recall` instead only for an explicit,

@@ -17,7 +17,7 @@
       "version_stamped": true
     },
     {
-      "path": "plugins/faber-claude-code/agents/faber-knowledge.md",
+      "path": "plugins/faber-claude-code/agents/faber-context.md",
       "mode": "0644",
       "version_stamped": false
     },
@@ -142,7 +142,7 @@
       "version_stamped": false
     },
     {
-      "path": "plugins/faber-cowork/agents/faber-knowledge.md",
+      "path": "plugins/faber-cowork/agents/faber-context.md",
       "mode": "0644",
       "version_stamped": false
     },

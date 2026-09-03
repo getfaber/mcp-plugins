@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "faber-claude-code",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "displayName": "Faber for Claude Code",
-  "description": "Publish and recall Faber artifacts with reliable delivery and knowledge capture.",
+  "description": "Publish and recall Faber artifacts with reliable delivery and Context capture.",
   "author": {
     "name": "Faber"
   },
@@ -11,10 +11,10 @@
   "homepage": "https://www.getfaber.app",
   "keywords": [
     "artifacts",
-    "knowledge",
+    "context",
     "mcp",
     "publishing",
-    "context"
+    "collaboration"
   ],
   "mcpServers": {
     "faber": {

@@ -7,5 +7,5 @@ if sh "$plugin_root/scripts/launch-companion.sh" hook PreToolUse; then
   exit 0
 fi
 
-echo "Faber blocked this tool because its private-knowledge policy could not be verified." >&2
+echo "Faber blocked this tool because its private-context policy could not be verified." >&2
 exit 2
