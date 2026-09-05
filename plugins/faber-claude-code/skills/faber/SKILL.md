@@ -200,26 +200,27 @@ target fields accepted by the supplied `faber_attach_context` tool. Use only
 `artifact_id` and `version`, plus any returned workspace selector accepted by
 the tool. Tell the child to copy every target value into
 `faber_attach_context`; it must never infer a target or workspace from a title,
-marker, or session fact. Copy into its prompt up to 12 concise bullets, totaling
-at most 4 KiB, that prioritize the most important session-only facts, decisions,
-rationale, verification results,
-and cited sources relevant to the artifact but absent from it; do not replace
-those inputs with publication metadata. Every bullet must be appropriate for
-the artifact's full audience because the completed Context Capsule inherits the
-artifact's visibility.
-Before launching the child, review those bullets and remove operational publish
-details: local paths or file references, artifact content, artifact IDs, URLs,
-publication references, workspace selectors, capability fields, and publication
-status. Here, URLs means Faber artifact, publication, workspace, and other
-operational links; preserve cited public HTTP or HTTPS evidence links. The exact
-target belongs only in the `Target` block. Also remove credentials and raw
-transcript text. If no safe session-only bullet remains, skip optional Context
-instead of passing operational metadata.
+marker, or session fact. After the Target block, provide an `Artifact (primary
+evidence)` section with at most 64 KiB of readable visible artifact text and a
+`Session (supplemental)` section with at most 32 KiB of normalized session
+context. The artifact is primary. Session context may add relevant rationale,
+constraints, assumptions, unresolved questions, operational knowledge, and
+cited public sources that the artifact omits. Both sections must be appropriate
+for the artifact's full audience because the Context Capsule inherits it.
+Before launching the child, remove scripts, styles, embedded data, local paths
+or file references, credentials, raw transcript text, Faber links, publication
+references, workspace selectors, capability fields, and publication status.
+Preserve cited public HTTP or HTTPS evidence links. The exact target belongs
+only in the `Target` block. If no safe meaningful Context remains, skip it.
 This transfer is not capsule drafting: the child creates the structured
-Context Capsule v2 attachment required by the tool. The main agent must not
+Context Capsule v3 attachment required by the tool. The main agent must not
 draft or attach the capsule, wait, poll, or use blocking work as a fallback. The
 child agent's failure never invalidates the artifact and does not trigger a
-second generation path. Tell the child to call `faber_attach_context` once.
+second generation path. After launching the child, do not call
+`faber_retry_context` or any other Faber tool because the child reports success
+or failure; only a later user-requested status result with
+`context_action=retry` enables the separate retry flow above. Tell the child to
+call `faber_attach_context` once.
 Only when that call's structured result explicitly returns `retryable: true`,
 it may repeat the exact same attachment once without polling, using unchanged
 target values and unchanged capsule JSON. It must not regenerate the
