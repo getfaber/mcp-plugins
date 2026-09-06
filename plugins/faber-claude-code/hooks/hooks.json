@@ -32,11 +32,23 @@
         ]
       },
       {
-        "matcher": "faber_(publish_artifact|publish_status)$",
+        "matcher": "faber_(publish_artifact|publish_status|retry_context|attach_context)$",
         "hooks": [
           {
             "type": "command",
             "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/launch-companion.sh\" hook PostToolUse",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "(Agent|Task|faber_attach_context)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/launch-companion.sh\" hook PostToolUseFailure",
             "timeout": 2
           }
         ]

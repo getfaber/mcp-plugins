@@ -81,28 +81,13 @@ Choose the publish source before doing any preparation:
 Follow the `content_ref` field's eligibility, byte-limit, and oversize guidance.
 Never truncate or split without the user's direction, and never publish
 directories, symlinks, credential locations, or files containing secrets.
-Self-contained HTML is the default; requested single-file text formats remain
-supported.
-
-Before publishing any source, including an existing local file, check that it
-does not contain raw transcript material, private session details, credentials,
-or other content inappropriate for everyone who will be able to view the
-artifact. Stop and explain the concern rather than silently rewriting an
+Before publishing, check that the source contains no raw transcript material,
+private session details, credentials, or other content inappropriate for its
+full audience. Stop and explain a concern rather than silently rewriting an
 existing source.
 
-Publish one regular UTF-8 file. An explicit request to publish to Faber also
-authorizes its bounded artifact-scoped Context sidecar. Context inherits the
-artifact's visibility, so capture only facts appropriate for the artifact's full
-audience. Treat them as one operation and do not ask for another Faber-specific
-confirmation. Artifact publication remains an external write in native host
-approval UI; do not suppress that approval.
-
-Publish through the `content_ref` field declared by the
-`faber_publish_artifact` tool supplied alongside this skill.
-Do not prepare or pass `context_capsule` to this tool; optional Context
-capture begins only after the publication URL is visible.
-
-Apply the declared capability to the source chosen above:
+Publish one regular UTF-8 file through the `content_ref` field declared by
+`faber_publish_artifact`:
 
 - **Existing artifact:** Resolve and pass the existing file's absolute path
   directly. Never stage it or rewrite it unless the user explicitly requested
@@ -111,6 +96,12 @@ Apply the declared capability to the source chosen above:
   host-resolved user home directory's `.faber/staging` folder. Pass its absolute
   path. If that location cannot be written or accessed, report the local-access
   failure and stop; do not switch to another publishing method.
+
+An explicit publish request also authorizes bounded artifact-scoped Context,
+which inherits the artifact's visibility. Do not request another Faber-specific
+confirmation or suppress the host's native approval for the artifact write.
+Do not prepare or pass `context_capsule`. The executor or a frozen-handoff adapter
+captures Context input; attachment begins only after the URL is visible.
 
 For `content_ref`, Faber stores an encrypted local outbox snapshot until
 delivery. It never moves, rewrites, changes permissions on, or deletes the
@@ -126,8 +117,7 @@ Handle exactly one result branch:
 - **Complete:** Surface the artifact URL immediately.
 - **Pending:** A local `content_ref` publication returns a reserved Faber URL
   within 20 seconds of durable snapshot acceptance. Surface that URL
-  immediately. The opened Faber page shows pending delivery and refreshes when
-  ready; do not poll or keep the task active.
+  immediately; do not poll or keep the task active.
 - **Action required:** Follow the returned action. If there are workspace choices,
   ask the user which named workspace should receive the artifact and show the
   existing workspace names as options with the question. Use the exact
@@ -148,33 +138,28 @@ not wait for a pending publication to complete unless the user explicitly asks
 for status.
 For the initial successful complete or pending publication, the main agent's
 response must contain only the bare Faber URL. Do not add any other narration
-or description about how the tools work. The tool's visible URL is
-sufficient when the host exposes it; otherwise return that URL as the sole
-response. This does not suppress a required workspace-selection action, a concise
-failure response, a background child's attachment status, or a later user-requested
-status or Context recovery response.
+or description. The visible tool URL is sufficient when the host exposes it.
+Workspace selection, failures, and later explicit status or Context recovery
+requests still receive concise responses.
 
-The publish tool's visible result surfaces its Faber URL. A result without
-`context_action` requires no agent-side Context
-work: the executor may capture bounded main-session context and
-continue Context generation in its own background process. Do not
+A result without `context_action` belongs to executor-owned Context. Do not
 prepare that context; do not call another tool, wait, poll, or keep the task
-active for this optional work. Context failure never invalidates the artifact.
-The executor reproduces the publishing session's model runtime from structured
-host metadata; the main agent must not discover or pass model metadata to select
-the background worker's runtime. This does not change the publication
-provenance guidance above.
-For `context_action=attach_if_background_supported`, continue to Optional
-asynchronous Context. For any other non-empty `context_action`, preserve the
-surfaced artifact result and follow or report the returned recovery guidance;
-never retry or invalidate the completed publication because of optional
-Context.
+active for this optional work. The executor reproduces the publishing session's
+model runtime from structured host metadata. For
+`context_action=attach_if_background_supported`, continue below. For any other
+non-empty action, follow its recovery guidance without republishing. Context
+failure never invalidates the artifact.
 
 When status reports `context_action=retry`, the artifact is already complete.
 Call `faber_retry_context` once with the same `publication_url`, surface that
 Context generation resumed, and do not poll unless the user later requests
-status. If retry is unavailable or expired, report that Context was not
-attached without republishing the artifact.
+status. A user-requested recovery after a denied child or host restart may also
+call this tool once with the original URL. When a host-provided frozen-handoff
+adapter returns `context_action=attach_if_background_supported`, follow its
+target-only launch instructions; the adapter supplies the already frozen
+evidence. A claimed child is not automatically regenerated. If retry is
+unavailable or expired, report that Context was not attached without
+republishing.
 
 ## Optional asynchronous Context
 
@@ -185,9 +170,8 @@ belongs to executor-owned Context. The publication URL must already
 be visible. Start at most one independent background task only when it already
 has the supplied `faber_attach_context` tool without a new approval and does
 not keep the current task active or require waiting; otherwise skip Context.
-When the host supplies a dedicated background Context agent, invoke that
-agent exactly once. Otherwise use a native background child only when it
-satisfies the same tool, independence, and approval constraints.
+Use a dedicated background Context agent when supplied, otherwise a native
+background child with the same capabilities.
 
 Use the host's inherit or same-as-parent model option. Do not choose a model
 identifier, launch another CLI process, or use a joined child. If the host
@@ -195,36 +179,46 @@ cannot provide an inherited-model background agent, skip optional Context for
 this publication.
 
 Begin the background-task prompt with a `Target` block containing the exact
-target fields accepted by the supplied `faber_attach_context` tool. Use only
-`publication_url` when that field is available; otherwise use the returned
-`artifact_id` and `version`, plus any returned workspace selector accepted by
-the tool. Tell the child to copy every target value into
-`faber_attach_context`; it must never infer a target or workspace from a title,
-marker, or session fact. After the Target block, provide an `Artifact (primary
-evidence)` section with at most 64 KiB of readable visible artifact text and a
-`Session (supplemental)` section with at most 32 KiB of normalized session
-context. The artifact is primary. Session context may add relevant rationale,
-constraints, assumptions, unresolved questions, operational knowledge, and
-cited public sources that the artifact omits. Both sections must be appropriate
-for the artifact's full audience because the Context Capsule inherits it.
-Before launching the child, remove scripts, styles, embedded data, local paths
-or file references, credentials, raw transcript text, Faber links, publication
-references, workspace selectors, capability fields, and publication status.
+`publication_url` returned by `faber_publish_artifact`. Tell the child to copy
+that URL into `faber_attach_context`; it must never infer a target or workspace
+from a title, marker, or session fact. When the host provides a target-only
+frozen-handoff adapter, follow its launch instructions and supply only this
+prefix, without indentation or a colon:
+
+```text
+Target
+publication_url=<exact returned publication_url>
+
+```
+
+The adapter adds the frozen artifact and session sections; do not construct,
+copy, or paraphrase them yourself. Without that capability, after the Target
+block provide an `Artifact (primary evidence)` section with at most 64 KiB of
+readable visible artifact text and a `Session (supplemental)` section with at
+most 32 KiB of normalized session context. The artifact is primary; supplemental
+context may add relevant rationale, constraints, assumptions, unresolved
+questions, operational knowledge, and public evidence. Both must suit the
+artifact's full audience. Remove scripts, styles, and embedded data from primary
+text, but preserve harmless filenames and path-like text; reject credentials
+instead of rewriting the artifact. Sanitize only supplemental context by removing
+credentials, transcript framing, local paths and file references, Faber links,
+publication or workspace mechanics, capability fields, and tool mechanics.
+When a frozen-handoff adapter is present, launch and explicit retry use the same
+frozen sections through that adapter; never reread or rebuild session content on
+retry.
 Preserve cited public HTTP or HTTPS evidence links. The exact target belongs
 only in the `Target` block. If no safe meaningful Context remains, skip it.
 This transfer is not capsule drafting: the child creates the structured
 Context Capsule v3 attachment required by the tool. The main agent must not
 draft or attach the capsule, wait, poll, or use blocking work as a fallback. The
 child agent's failure never invalidates the artifact and does not trigger a
-second generation path. After launching the child, do not call
-`faber_retry_context` or any other Faber tool because the child reports success
-or failure; only a later user-requested status result with
-`context_action=retry` enables the separate retry flow above. Tell the child to
-call `faber_attach_context` once.
-Only when that call's structured result explicitly returns `retryable: true`,
-it may repeat the exact same attachment once without polling, using unchanged
-target values and unchanged capsule JSON. It must not regenerate the
-capsule, republish, make a third attachment call, or call other Faber tools.
+second generation path. Keep optional outcomes silent unless the user requests
+diagnostics. After launching the child, do not call `faber_retry_context` or any
+other Faber tool because the child reports success or failure; only later
+user-requested recovery enables a retry. Tell the child to call
+`faber_attach_context` once. Only after a structured `retryable: true` result may
+it repeat the exact same attachment once without polling. Keep the target and
+capsule JSON unchanged; never regenerate, republish, or make a third call.
 
 ## Reusing context
 
