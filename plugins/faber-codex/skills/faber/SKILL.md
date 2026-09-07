@@ -56,8 +56,10 @@ Choose the publish source before doing any preparation:
 
 - **Existing local artifact:** When the user identifies an existing artifact by
   local name or path and asks to publish it unchanged, resolve its absolute path
-  and use that file as the source. Publish the file as-is; do not rewrite or read
-  it unless the user asks to.
+  and use that file as the source. **Hard rule:** Before calling
+  `faber_publish_artifact`, do not use `Read`, Python, or any other tool to
+  inspect the file contents. Pass the file path as `content_ref`. Publish
+  the file as-is; do not rewrite, sample, parse, or stage it.
 - **Retrieved Faber artifact:** Use the exact fetched source as the starting
   point, apply the user's requested changes before publishing an amendment or
   derived artifact, and preserve the fetched checkpoint's lineage. If the user
@@ -81,7 +83,9 @@ Publish one regular UTF-8 file through the `content_ref` field declared by
 
 - **Existing artifact:** Resolve and pass the existing file's absolute path
   directly. Never stage it or rewrite it unless the user explicitly requested
-  those edits before publishing. Do not read the file contents unless the user asks
+  those edits before publishing. Do not inspect or read the file contents before
+  the publish call; a rejection only permits inspection when the user explicitly
+  asks for validation.
 - **Retrieved or new artifact:** Prefer a uniquely named file in the
   host-resolved user home directory's `.faber/staging` folder. Pass its absolute
   path. If that location cannot be written or accessed, report the local-access
