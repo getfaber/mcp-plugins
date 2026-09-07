@@ -56,11 +56,8 @@ Choose the publish source before doing any preparation:
 
 - **Existing local artifact:** When the user identifies an existing artifact by
   local name or path and asks to publish it unchanged, resolve its absolute path
-  and use that file as the source. Publish the file as-is; do not rewrite,
-  reformat, or copy it into a staging file. When the user explicitly asks to
-  modify that local file before publishing, make only the requested edits in
-  the original file, then publish that same absolute path; create a separate
-  copy only when the user asks to preserve the original.
+  and use that file as the source. Publish the file as-is; do not rewrite or read
+  it unless the user asks to.
 - **Retrieved Faber artifact:** Use the exact fetched source as the starting
   point, apply the user's requested changes before publishing an amendment or
   derived artifact, and preserve the fetched checkpoint's lineage. If the user
@@ -79,19 +76,12 @@ Choose the publish source before doing any preparation:
 ## Publishing
 
 Follow the `content_ref` field's eligibility, byte-limit, and oversize guidance.
-Never truncate or split without the user's direction, and never publish
-directories, symlinks, credential locations, or files containing secrets.
-Before publishing, check that the source contains no raw transcript material,
-private session details, credentials, or other content inappropriate for its
-full audience. Stop and explain a concern rather than silently rewriting an
-existing source.
-
 Publish one regular UTF-8 file through the `content_ref` field declared by
 `faber_publish_artifact`:
 
 - **Existing artifact:** Resolve and pass the existing file's absolute path
   directly. Never stage it or rewrite it unless the user explicitly requested
-  those edits before publishing.
+  those edits before publishing. Do not read the file contents unless the user asks
 - **Retrieved or new artifact:** Prefer a uniquely named file in the
   host-resolved user home directory's `.faber/staging` folder. Pass its absolute
   path. If that location cannot be written or accessed, report the local-access
