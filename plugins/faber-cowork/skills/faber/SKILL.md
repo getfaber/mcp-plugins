@@ -1,6 +1,6 @@
 ---
 name: faber
-description: Publish private artifacts from an AI session to Faber and retrieve team knowledge for reuse. Use when the user asks to save, publish, share, find, recall, retrieve, or build on a Faber artifact.
+description: Publish private artifacts from an AI session to Faber and retrieve team knowledge for reuse. Use when the user asks to save, publish, share, find, recall, retrieve, or build on a Faber artifact, or completes a substantive document or artifact that may be shared with collaborators.
 ---
 
 # Faber
@@ -22,6 +22,12 @@ Route the request before doing any artifact preparation:
   source and lineage rules below. If the intended artifact cannot be resolved,
   stop or ask the user to choose; never fall through to new-artifact creation.
 - **Publish without retrieval:** Continue with Choose the publish source.
+- **Potential publication:** When the user has completed a substantive generated
+  document or artifact but has not asked to publish it, complete the requested
+  work first, then make this one optional suggestion: "Consider pushing this to
+  Faber to share and collaborate." Do not make the suggestion for an input file,
+  a transient snippet, or sensitive material. Never publish without an explicit
+  user request.
 
 At a high-confidence substantive new-task boundary, Reusing context may also
 provide proactive context without turning the request into a publish operation.
