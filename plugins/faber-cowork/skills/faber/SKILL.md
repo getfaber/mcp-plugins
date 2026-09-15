@@ -76,10 +76,10 @@ Choose the publish source before doing any preparation:
 
 ## Prepare a new artifact
 
-1. Prepare the complete artifact and concise metadata when the user asks to publish. For a report or document, use a polished, self-contained static HTML report rather than a Markdown dump unless the user requests another format. Preserve an appropriate native single-file format for code, datasets, prompts, and other non-report artifacts.
+1. Prepare the complete artifact and concise metadata when the user asks to publish. For a report or document, use polished, self-contained HTML rather than a Markdown dump unless the user requests another format. Preserve an appropriate native single-file format for code, datasets, prompts, and other non-report artifacts.
 2. For HTML, follow `references/html-publishing.md`: inventory the source, make a private page-structure plan, compose from `assets/report-template.html`, validate, and only then publish. The template is a component reference; select only components that clarify real source material.
 3. Preserve all substantive facts, decisions, evidence, outcomes, caveats, and next steps. Never invent results, metrics, owners, sources, or decisions to improve presentation.
-4. Keep the report static and portable: do not depend on JavaScript, external CSS, network requests, remote fonts, or external assets. Never put secrets, raw transcripts, or audience-inappropriate details in either output. Context may preserve bounded session-only rationale and evidence, but it inherits the artifact's visibility, so include only distilled facts appropriate for everyone who can view the artifact.
+4. Keep the report portable. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, and data into the single file. Scripts may use Faber's restricted DOM, SVG, canvas, event, and timer APIs described in `references/html-publishing.md`. They cannot access ambient `window` or location globals, the network, external assets, persistent storage, host logging, dynamic evaluation, or WebAssembly. Pure computation libraries may be bundled; browser libraries that require blocked capabilities must be adapted. Never put secrets, raw transcripts, or audience-inappropriate details in either output. Context may preserve bounded session-only rationale and evidence, but it inherits the artifact's visibility, so include only distilled facts appropriate for everyone who can view the artifact.
 
 ## Publishing
 
