@@ -45,14 +45,57 @@ unique artifact class. Do not restyle the foundation globally.
 
 ## 4. Validate
 
+When interaction is necessary, use classic inline `<script>` blocks. Faber runs
+them together in source order inside an isolated compartment, so top-level
+declarations are shared; an uncaught error stops the remaining authored code.
+Module scripts are removed. The available globals are `document`, no-op `console`,
+`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`,
+`requestAnimationFrame`, and `cancelAnimationFrame`.
+
+- `document` supports `body`, `documentElement`, `addEventListener`,
+  `createElement`, `createElementNS` for SVG, `createTextNode`, `getElementById`,
+  `querySelector`, and `querySelectorAll`.
+- Elements support `nodeType`, `tagName`, `id`, `className`, `textContent`,
+  `innerHTML`, form values, `hidden`, `style`, `dataset`, `classList`,
+  `parentElement`, `children`, `addEventListener`, `append`, `appendChild`,
+  `closest`, `contains`, `getAttribute`, `getContext("2d")`, `matches`, queries,
+  `remove`, `removeAttribute`, `replaceChildren`, `setAttribute`, and
+  `setPointerCapture`. Faber-owned nodes, attributes, and selectors are hidden,
+  and the root document containers cannot be removed or have their contents
+  replaced. Listener options are omitted or the boolean capture flag.
+- Events expose their type, target/current target, keyboard, pointer, and input
+  fields plus `preventDefault` and `stopPropagation`. Canvas exposes common 2D
+  path, transform, rectangle, text, fill, and stroke operations. Style accepts
+  common layout, color, typography, size, visibility, and transform properties;
+  external URLs and fixed positioning are rejected.
+
+For example:
+
+```html
+<button id="increment">0</button>
+<script>
+  const button = document.getElementById("increment");
+  button.addEventListener("click", () => {
+    button.textContent = String(Number(button.textContent) + 1);
+  });
+</script>
+```
+
 Before staging the file, confirm that:
 
 - every substantive source item is represented or intentionally omitted;
 - no result, claim, decision, metric, source, or owner was invented;
 - heading order, landmarks, links, and navigation targets are valid;
 - tables and diagrams remain readable on narrow screens and in print;
-- there is no JavaScript, external stylesheet, remote font, network request, or
-  external asset;
+- classic inline JavaScript is included only when interaction materially improves the artifact
+  and uses only Faber's restricted DOM, SVG, canvas, event, and timer APIs;
+- ordinary inert attributes and scalar DOM properties may be used directly; privileged browser
+  capabilities remain unavailable;
+- all HTML, CSS, JavaScript, images, and data are embedded in the single file,
+  with no external stylesheet, script, asset, remote font, or network request;
+- JavaScript does not depend on ambient `window` or location globals, the network,
+  external assets, persistent storage, host logging, dynamic evaluation,
+  WebAssembly, or a browser library that requires those blocked capabilities;
 - there are no empty decorative sections, nested cards, secrets, raw
   transcripts, or private session details; and
 - the output is one regular UTF-8 HTML file within the publish limit.
