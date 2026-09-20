@@ -45,29 +45,20 @@ unique artifact class. Do not restyle the foundation globally.
 
 ## 4. Validate
 
-When interaction is necessary, use classic inline `<script>` blocks. Faber runs
-them together in source order inside an isolated compartment, so top-level
-declarations are shared; an uncaught error stops the remaining authored code.
-Module scripts are removed. The available globals are `document`, no-op `console`,
-`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`,
-`requestAnimationFrame`, and `cancelAnimationFrame`.
+When interaction is necessary, use classic inline `<script>` blocks. Faber View
+runs them as a normal page inside a sandboxed iframe (`allow-scripts`, no
+`allow-same-origin`). There is no tag allowlist, CSS rewriter, or SES
+compartment. Inline JavaScript and CSS execute with ordinary browser APIs,
+including `window`, SVG `createElementNS`, canvas, `@font-face` data URLs, and
+`position: fixed`.
 
-- `document` supports `body`, `documentElement`, `addEventListener`,
-  `createElement`, `createElementNS` for SVG, `createTextNode`, `getElementById`,
-  `querySelector`, and `querySelectorAll`.
-- Elements support `nodeType`, `tagName`, `id`, `className`, `textContent`,
-  `innerHTML`, form values, `hidden`, `style`, `dataset`, `classList`,
-  `parentElement`, `children`, `addEventListener`, `append`, `appendChild`,
-  `closest`, `contains`, `getAttribute`, `getContext("2d")`, `matches`, queries,
-  `remove`, `removeAttribute`, `replaceChildren`, `setAttribute`, and
-  `setPointerCapture`. Faber-owned nodes, attributes, and selectors are hidden,
-  and the root document containers cannot be removed or have their contents
-  replaced. Listener options are omitted or the boolean capture flag.
-- Events expose their type, target/current target, keyboard, pointer, and input
-  fields plus `preventDefault` and `stopPropagation`. Canvas exposes common 2D
-  path, transform, rectangle, text, fill, and stroke operations. Style accepts
-  common layout, color, typography, size, visibility, and transform properties;
-  external URLs and fixed positioning are rejected.
+Network access is blocked by CSP for the Faber-served document
+(`connect-src 'none'`, `frame-src 'none'`, `object-src 'none'`,
+`form-action 'none'`, `img-src data: blob:`, `font-src data:`). Remote scripts,
+`fetch`, CDN fonts, nested frames, and form submission do not work. Persistent
+storage is unavailable on the opaque origin. Do not use `location.href` or
+meta-refresh to leave the canvas; that navigation can leave Faber's CSP.
+`<a href="https://…">` clicks are confirmed by the parent.
 
 For example:
 
@@ -87,15 +78,18 @@ Before staging the file, confirm that:
 - no result, claim, decision, metric, source, or owner was invented;
 - heading order, landmarks, links, and navigation targets are valid;
 - tables and diagrams remain readable on narrow screens and in print;
-- classic inline JavaScript is included only when interaction materially improves the artifact
-  and uses only Faber's restricted DOM, SVG, canvas, event, and timer APIs;
-- ordinary inert attributes and scalar DOM properties may be used directly; privileged browser
-  capabilities remain unavailable;
+- classic inline JavaScript is included only when interaction materially improves the artifact;
+- inline scripts and CSS run as a normal page inside Faber's sandboxed iframe;
+  network requests, remote scripts and fonts, nested frames, and form submission
+  stay blocked;
 - all HTML, CSS, JavaScript, images, and data are embedded in the single file,
   with no external stylesheet, script, asset, remote font, or network request;
-- JavaScript does not depend on ambient `window` or location globals, the network,
-  external assets, persistent storage, host logging, dynamic evaluation,
-  WebAssembly, or a browser library that requires those blocked capabilities;
+- do not use `location.href` or meta-refresh to leave the canvas; `fetch` and
+  `<script src="https://…">` will not load; `<a href="https://…">` clicks are
+  confirmed by the parent;
+- JavaScript may use ordinary browser APIs inside the frame, including `window`.
+  Persistent storage is unavailable on the opaque origin. Do not depend on a
+  CDN or a browser library that requires network access;
 - there are no empty decorative sections, nested cards, secrets, raw
   transcripts, or private session details; and
 - the output is one regular UTF-8 HTML file within the publish limit.
