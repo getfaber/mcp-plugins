@@ -1,327 +1,30 @@
 {
   "client": "claude-code",
-  "instructions": "Use Faber to publish durable artifacts and reuse accessible team knowledge. For a report or document, default to a polished, self-contained HTML artifact. Make HTML easy to read: lead with a clear title and short orientation; use semantic HTML and a clear heading hierarchy; use responsive layout; and include a compact sidebar in every artifact (anchored navigation for multi-section reports, or a concise context/summary panel for short ones). Preserve substantive facts and caveats. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, and data into the single file. Scripts may use Faber restricted DOM, SVG, canvas, event, and timer APIs. They cannot access ambient window or location globals, the network, external assets, persistent storage, host logging, dynamic evaluation, or WebAssembly. Pure computation libraries may be bundled; browser libraries that require blocked capabilities must be adapted. Never include secrets, raw transcript text, or private session details. These HTML and sidebar guidelines do not apply to code, datasets, or an explicitly requested alternate format.",
+  "instructions": "Use Faber to publish durable artifacts and reuse accessible team knowledge. For a report or document, default to a polished, self-contained HTML artifact. Make HTML easy to read: lead with a clear title and short orientation; use semantic HTML and a clear heading hierarchy; use responsive layout; and include a compact sidebar in every artifact (anchored navigation for multi-section reports, or a concise context/summary panel for short ones). Preserve substantive facts and caveats. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, and data into the single file. Scripts run as a normal page inside Faber's sandboxed iframe. They cannot fetch the network, load remote scripts or fonts, nest frames, or submit forms. Do not use location.href or meta-refresh to leave the canvas. Pure computation libraries may be bundled; browser libraries that require network access must be adapted or avoided. Never include secrets, raw transcript text, or private session details. These HTML and sidebar guidelines do not apply to code, datasets, or an explicitly requested alternate format.",
   "tools": [
     {
       "name": "faber_attach_context",
       "title": "Attach context to a Faber artifact",
-      "description": "Attach one structured Context Capsule v3, grounded in readable artifact content and supplemented by bounded publishing-session context, only when a successful publication explicitly returns context_action=attach_if_background_supported. The attachment waits for the exact published artifact version, does not create a version, and is first-write-wins. Use faber_retry_context for recovery after failed background generation.",
+      "description": "Complete context_action=attach_if_background_supported from a successful Faber publication. Attach concise Markdown context grounded in the artifact and publishing session to the exact published artifact version. Faber converts it to its canonical Context Capsule. This does not create another artifact version. The first valid attachment wins, and retries are idempotent.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "context_capsule": {
-            "type": "object",
-            "properties": {
-              "schema_version": {
-                "type": "number",
-                "const": 3
-              },
-              "outcome": {
-                "type": "object",
-                "properties": {
-                  "summary": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "details": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "evidence_ids": {
-                    "maxItems": 36,
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80,
-                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                    }
-                  }
-                },
-                "required": [
-                  "summary"
-                ],
-                "additionalProperties": {}
-              },
-              "categories": {
-                "minItems": 1,
-                "maxItems": 12,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80,
-                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "description": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "items": {
-                      "minItems": 1,
-                      "maxItems": 3,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 80,
-                            "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                          },
-                          "title": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "summary": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "applies_when": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "does_not_apply_when": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "detail_blocks": {
-                            "default": [],
-                            "maxItems": 12,
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "id": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 80,
-                                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                                },
-                                "label": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "value": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "items": {
-                                  "minItems": 1,
-                                  "maxItems": 12,
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  }
-                                },
-                                "ordered": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "label"
-                              ],
-                              "additionalProperties": {}
-                            }
-                          },
-                          "reusable_notes": {
-                            "default": [],
-                            "maxItems": 12,
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "id": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 80,
-                                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                                },
-                                "kind": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 80,
-                                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                                },
-                                "label": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "summary": {
-                                  "type": "string",
-                                  "minLength": 1
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "kind",
-                                "label",
-                                "summary"
-                              ],
-                              "additionalProperties": {}
-                            }
-                          },
-                          "evidence_ids": {
-                            "maxItems": 36,
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 80,
-                              "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "title",
-                          "summary"
-                        ],
-                        "additionalProperties": {}
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "label",
-                    "items"
-                  ],
-                  "additionalProperties": {}
-                }
-              },
-              "evidence": {
-                "maxItems": 36,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80,
-                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                    },
-                    "title": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "summary": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "origin": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80,
-                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                    },
-                    "artifact_quote": {
-                      "type": "object",
-                      "properties": {
-                        "exact": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "prefix": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "suffix": {
-                          "type": "string",
-                          "minLength": 1
-                        }
-                      },
-                      "required": [
-                        "exact"
-                      ],
-                      "additionalProperties": {}
-                    },
-                    "status": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80,
-                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                    },
-                    "source_ids": {
-                      "maxItems": 20,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 80,
-                        "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "summary",
-                    "origin"
-                  ],
-                  "additionalProperties": {}
-                }
-              },
-              "sources": {
-                "maxItems": 20,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80,
-                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
-                    },
-                    "title": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "url": {
-                      "type": "string",
-                      "maxLength": 2000
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "url"
-                  ],
-                  "additionalProperties": {}
-                }
-              }
-            },
-            "required": [
-              "schema_version",
-              "outcome",
-              "categories",
-              "evidence",
-              "sources"
-            ],
-            "additionalProperties": {},
-            "description": "Structured Context Capsule v3 grounded in the artifact and publishing session. Preserve reusable decisions, procedures, lessons, best practices, boundaries, unresolved questions, and evidence."
-          },
           "publication_url": {
             "type": "string",
             "minLength": 1,
             "maxLength": 2000,
-            "description": "Publication URL returned by faber_publish_artifact. Faber resolves it to the exact version, including while delivery is pending."
+            "description": "Version-pinned URL returned by faber_publish_artifact."
+          },
+          "context_markdown": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536,
+            "description": "Reusable Markdown context grounded in the artifact and publishing session. Use an Outcome heading and optional headings for decisions, procedures, lessons, best practices, open questions, or other knowledge."
           }
         },
         "required": [
           "publication_url",
-          "context_capsule"
+          "context_markdown"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
@@ -410,7 +113,7 @@
     {
       "name": "faber_publish_artifact",
       "title": "Publish artifact to Faber",
-      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Faber validates the file, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare or pass context_capsule. Reports are private to the publishing user by default. For the main agent's initial successful complete or pending response, return only the bare Faber URL: no progress narration, label, recap, workspace or status prose, or Context note. Follow any returned context_action only after surfacing that URL.",
+      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Faber validates the file, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare Context before the publication URL is visible. Reports are private to the publishing user by default. For the main agent's initial successful complete or pending response, return only the bare Faber URL: no progress narration, label, recap, workspace or status prose, or Context note. Follow any returned context_action only after surfacing that URL.",
       "inputSchema": {
         "type": "object",
         "properties": {

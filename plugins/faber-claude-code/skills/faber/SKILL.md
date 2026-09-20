@@ -60,8 +60,9 @@ and `derived_from_version`.
 
 Choose the publish source before doing any preparation:
 
-- **Existing local artifact:** When the user identifies an existing artifact by
-  local name or path and asks to publish it unchanged, resolve its absolute path
+- **Existing local or web artifact:** When the user identifies an existing
+  artifact by local name or path (download html if its on web) and asks to
+  publish it unchanged, resolve its absolute path
   and use that file as the source. **Hard rule:** Before calling
   `faber_publish_artifact`, do not use `Read`, Python, or any other tool to
   inspect the file contents. Pass the file path as `content_ref`. Publish
@@ -79,7 +80,7 @@ Choose the publish source before doing any preparation:
 1. Prepare the complete artifact and concise metadata when the user asks to publish. For a report or document, use polished, self-contained HTML rather than a Markdown dump unless the user requests another format. Preserve an appropriate native single-file format for code, datasets, prompts, and other non-report artifacts.
 2. For HTML, follow `references/html-publishing.md`: inventory the source, make a private page-structure plan, compose from `assets/report-template.html`, validate, and only then publish. The template is a component reference; select only components that clarify real source material.
 3. Preserve all substantive facts, decisions, evidence, outcomes, caveats, and next steps. Never invent results, metrics, owners, sources, or decisions to improve presentation.
-4. Keep the report portable. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, and data into the single file. Scripts may use Faber's restricted DOM, SVG, canvas, event, and timer APIs described in `references/html-publishing.md`. They cannot access ambient `window` or location globals, the network, external assets, persistent storage, host logging, dynamic evaluation, or WebAssembly. Pure computation libraries may be bundled; browser libraries that require blocked capabilities must be adapted. Never put secrets, raw transcripts, or audience-inappropriate details in either output. Context may preserve bounded session-only rationale and evidence, but it inherits the artifact's visibility, so include only distilled facts appropriate for everyone who can view the artifact.
+4. Keep the report portable. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, and data into the single file. Scripts run as a normal page inside Faber's sandboxed iframe as described in `references/html-publishing.md`. They cannot fetch the network, load remote scripts or fonts, nest frames, or submit forms. Do not use `location.href` or meta-refresh to leave the canvas. Pure computation libraries may be bundled; browser libraries that require network access must be adapted or avoided. Never put secrets, raw transcripts, or audience-inappropriate details in either output. Context may preserve bounded session-only rationale and evidence, but it inherits the artifact's visibility, so include only distilled facts appropriate for everyone who can view the artifact.
 
 ## Publishing
 
@@ -100,8 +101,9 @@ Publish one regular UTF-8 file through the `content_ref` field declared by
 An explicit publish request also authorizes bounded artifact-scoped Context,
 which inherits the artifact's visibility. Do not request another Faber-specific
 confirmation or suppress the host's native approval for the artifact write.
-Do not prepare or pass `context_capsule`. The executor or a frozen-handoff adapter
-captures Context input; attachment begins only after the URL is visible.
+Do not prepare Context before the publication URL is visible. The executor or a
+frozen-handoff adapter captures Context input; attachment begins only after the
+URL is visible.
 
 For `content_ref`, Faber stores an encrypted local outbox snapshot until
 delivery. It never moves, rewrites, changes permissions on, or deletes the
@@ -195,30 +197,33 @@ The adapter adds the frozen artifact and session sections; do not construct,
 copy, or paraphrase them yourself. Without that capability, after the Target
 block provide an `Artifact (primary evidence)` section with at most 64 KiB of
 readable visible artifact text and a `Session (supplemental)` section with at
-most 32 KiB of normalized session context. The artifact is primary; supplemental
-context may add relevant rationale, constraints, assumptions, unresolved
-questions, operational knowledge, and public evidence. Both must suit the
-artifact's full audience. Remove scripts, styles, and embedded data from primary
-text, but preserve harmless filenames and path-like text; reject credentials
-instead of rewriting the artifact. Sanitize only supplemental context by removing
-credentials, transcript framing, local paths and file references, Faber links,
-publication or workspace mechanics, capability fields, and tool mechanics.
+most 32 KiB of normalized session context. Use both the artifact and session
+context to extract relevant durable knowledge. Treat the artifact as authoritative
+for delivered work; use the session for relevant rationale, constraints,
+decisions, and unresolved questions not represented in the artifact. Both must
+suit the artifact's full audience. Remove scripts, styles, and embedded data from
+primary text, but preserve harmless filenames and path-like text; reject
+credentials instead of rewriting the artifact. Sanitize only supplemental context
+by removing credentials, transcript framing, local paths and file references,
+Faber links, publication or workspace mechanics, capability fields, and tool
+mechanics.
 When a frozen-handoff adapter is present, launch and explicit retry use the same
 frozen sections through that adapter; never reread or rebuild session content on
 retry.
 Preserve cited public HTTP or HTTPS evidence links. The exact target belongs
 only in the `Target` block. If no safe meaningful Context remains, skip it.
-This transfer is not capsule drafting: the child creates the structured
-Context Capsule v3 attachment required by the tool. The main agent must not
-draft or attach the capsule, wait, poll, or use blocking work as a fallback. The
-child agent's failure never invalidates the artifact and does not trigger a
+This transfer is not capsule drafting: the child creates concise reusable
+Markdown, and Faber converts it to its canonical Context Capsule. Its `## Outcome`
+must be small: fewer than 50 words in total. The main agent
+must not draft or attach Context, wait, poll, or use blocking work as a fallback.
+The child agent's failure never invalidates the artifact and does not trigger a
 second generation path. Keep optional outcomes silent unless the user requests
 diagnostics. After launching the child, do not call `faber_retry_context` or any
 other Faber tool because the child reports success or failure; only later
 user-requested recovery enables a retry. Tell the child to call
 `faber_attach_context` once. Only after a structured `retryable: true` result may
 it repeat the exact same attachment once without polling. Keep the target and
-capsule JSON unchanged; never regenerate, republish, or make a third call.
+Markdown unchanged; never regenerate, republish, or make a third call.
 
 ## Reusing context
 
