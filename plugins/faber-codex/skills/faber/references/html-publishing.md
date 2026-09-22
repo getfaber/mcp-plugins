@@ -43,7 +43,34 @@ Use one optional `<style data-faber-template-extension>` block for a necessary
 artifact-specific diagram or layout. Scope every extension selector beneath a
 unique artifact class. Do not restyle the foundation globally.
 
-## 4. Validate
+## 4. Choose document or application
+
+Choose the artifact type by its primary experience and editing contract. The
+presence, amount, or complexity of JavaScript does not determine the type.
+
+| Choose `document` | Choose `application` |
+| --- | --- |
+| Readable content is the durable value and a user may reasonably edit it in Faber. | Operating the interface is the durable value. |
+| Interaction supports the document through tabs, filters, expandable sections, charts, maps, media playback, or a calculator within a report. | Controls, state, and computed outputs form the primary tool, simulator, configurator, workbench, command center, or standalone calculator. |
+| Visible prose and structure can change without making the protected behavior misleading. | Visible content, data, and behavior must change together; editing one independently could desynchronize the experience. |
+
+Default uncertain HTML to `document`. A large script can progressively enhance a
+document, while a small script can implement an application's primary workflow.
+React artifacts require `application`.
+
+For example, Launch Atlas remains a `document` when its interactive map supports
+an editable report. A report with filterable charts or expandable evidence is
+also a `document`. A standalone simulator is an `application`, as is Customer
+Signal Command Center because evidence selection and recomputed recommendations
+are its primary experience.
+
+Executable HTML documents remain visually editable in Faber: authored text and
+structure can be changed while scripts, event handlers, controls, and other
+dynamic regions stay protected. Changing protected behavior requires
+republishing. Applications are content view-only; all content changes arrive as
+publisher-created versions.
+
+## 5. Validate
 
 When interaction is necessary, use classic inline `<script>` blocks. Faber View
 runs them as a normal page inside a sandboxed iframe (`allow-scripts`, no
@@ -82,8 +109,11 @@ Before staging the file, confirm that:
 - inline scripts and CSS run as a normal page inside Faber's sandboxed iframe;
   network requests, remote scripts and fonts, nested frames, and form submission
   stay blocked;
-- all HTML, CSS, JavaScript, images, and data are embedded in the single file,
+- all HTML, CSS, JavaScript, images, media, and data are embedded in the single file,
   with no external stylesheet, script, asset, remote font, or network request;
+- bundled audio and video use `data:` or session-local `blob:` URLs and begin
+  only after user interaction; remote media, autoplay, camera, and microphone
+  remain blocked;
 - do not use `location.href` or meta-refresh to leave the canvas; `fetch` and
   `<script src="https://…">` will not load; `<a href="https://…">` clicks are
   confirmed by the parent;
@@ -94,7 +124,7 @@ Before staging the file, confirm that:
   transcripts, or private session details; and
 - the output is one regular UTF-8 HTML file within the publish limit.
 
-## 5. Publish
+## 6. Publish
 
 Stage the validated file and call `faber_publish_artifact` according to the
 content-source, workspace, metadata, and lineage requirements in `SKILL.md`.
