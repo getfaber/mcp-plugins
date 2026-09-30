@@ -32,7 +32,7 @@
         ]
       },
       {
-        "matcher": "faber_(publish_artifact|publish_status|retry_context|attach_context)$",
+        "matcher": "faber_(publish_artifact|publish_app|publish_status|retry_context|attach_context)$",
         "hooks": [
           {
             "type": "command",

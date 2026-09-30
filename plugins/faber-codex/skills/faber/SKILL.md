@@ -13,6 +13,8 @@ Route the request before doing any artifact preparation:
 
 - **Connect or set up Faber:** Use the authentication flow in Preflight. Do not
   continue into retrieval or publishing unless the user requested it.
+- **Configure an app:** Use `faber_configure_app` and the App configuration
+  rules below. Do not republish the app to import secrets.
 - **Retrieve only:** For a Faber URL or artifact ID, use
   `faber_get_artifact`. For an artifact name or topic, use `faber_search` and
   fetch exact source only when a result is relevant. If multiple results could
@@ -60,6 +62,9 @@ and `derived_from_version`.
 
 Choose the publish source before doing any preparation:
 
+- **Ready frontend folder:** Use `faber_publish_app` with its absolute
+  `directory_ref`; follow Hosted apps below instead of single-file preparation.
+  Keep `faber_publish_artifact` for a single completed UTF-8 file.
 - **Existing local or web artifact:** When the user identifies an existing
   artifact by local name or path (download html if its on web) and asks to
   publish it unchanged, resolve its absolute path
@@ -113,20 +118,89 @@ source file. Once Faber returns a publication URL, never retry it through
 explicit status or recovery call.
 Reports are private to the publishing user by default.
 
+### Hosted apps
+
+Publish a ready frontend folder with root `index.html` using
+`faber_publish_app`. Build framework projects before calling the tool; the
+tool never installs dependencies or executes build scripts. Supply title,
+workspace selection, `update_of`, and version-pinned lineage as appropriate.
+Use `routing_mode=spa` only when navigation requires index fallback; the default
+is `static`.
+
+Capture includes every regular file in the folder, including new and uncommitted
+files, with limits of 20 MiB and 2,000 files. Authors are responsible for the
+folder contents: capture does not scan for credentials, block credential
+filenames, redact files, or request an extra secret confirmation. The immutable
+binary bundle and manifest are stored in the encrypted local outbox. Delivery
+and retries use those frozen bytes without rereading or modifying the folder.
+
+Apply the same publication-result and optional background Context rules below.
+After receiving a URL, use `faber_publish_status`, never another publish call.
+`app_status` distinguishes uploading, validating, published, needs configuration,
+and failed when supplied by the executor or API; Context status is separate.
+Context uses bounded readable evidence from the frozen bundle, not ZIP bytes,
+binary assets, or newly read source files. Do not place secret values in tool
+arguments, Context, or model responses.
+
+### App configuration
+
+Use `faber_configure_app` with the app's `app_id` and workspace selector when
+the user requests configuration. Import secrets using only an absolute
+`secrets_ref` and explicit `selected_keys`. Do not read or paste the values into
+model context, tool arguments, or replies. The file must be a regular UTF-8
+`.json` object or single-line `.env` file of at most 256 KiB; select at most 100
+keys, each with a nonempty value of at most 8192 bytes. Dotenv quotes delimit
+literal values: variables, commands, and escapes are never expanded.
+
+Optional `required_secrets`, `integrations`, and `remove_secrets` change the
+non-secret declarations. Integration fields are `name`, `baseUrl`, `paths`,
+`queryParameters`, and `secretHeaders`. Use an HTTPS origin with a root path
+for `baseUrl`; `secretHeaders` maps header names to secret key names, not values.
+Omitted fields remain unchanged. The tool gets the current revision and
+performs one revision-checked update; it does not retain secrets for later delivery or retry a
+conflict automatically. Report only key names, revision, configuration status,
+or the returned safe error. If delivery is uncertain, check configuration before
+another user-authorized import. Configuration never starts artifact Context.
+
+### Local verification
+
+Only run these checks when local verification is explicitly requested:
+
+1. Wait until all contributing changes are finished, then freeze the source and
+   extract the candidate from the final production web image. Source Go tests,
+   a source-built local tool, and simulated hosts do not verify that image.
+   Keep its checksum and use the same packaged candidate in each real host.
+2. Use an isolated host profile and working directory outside the repository.
+   Set API and app origins explicitly to the local stack, ensure configuration
+   endpoints are ready, and confirm only the intended packaged server is
+   registered. Stop if consent, the MCP destination, or the returned URL points
+   to hosted production instead of the local stack.
+3. Publish a ready folder containing root `index.html`, scripts, styles, a binary
+   asset, and a new/uncommitted file. Record the complete source inventory.
+   Verify eventual publication, exact downloaded bytes, and
+   source immutability. Interrupt delivery, change the source folder, and recover
+   the original receipt; delivery must use its frozen bytes without republishing.
+4. Keep synthetic secret files outside the bundle. Test JSON and dotenv imports,
+   explicit key selection, owner/editor access, conflicts, and failure responses.
+   Values must not appear in results, model context, logs, downloads, or Clone.
+5. Record publication, optional Context, configuration, and service readiness
+   separately. A reserved URL or passing source test is not a packaged-host pass.
+   Do not claim real-host or image acceptance until those exact runs complete.
+
 ## Handle the publication result
 
 Handle exactly one result branch:
 
 - **Complete:** Surface the artifact URL immediately.
-- **Pending:** A local `content_ref` publication returns a reserved Faber URL
-  within 20 seconds of durable snapshot acceptance. Surface that URL
+- **Pending:** A local `content_ref` or `directory_ref` publication returns a
+  reserved Faber URL within 20 seconds of durable snapshot acceptance. Surface that URL
   immediately; do not poll or keep the task active.
 - **Action required:** Follow the returned action. If there are workspace choices,
   ask the user which named workspace should receive the artifact and show the
   existing workspace names as options with the question. Use the exact
   displayed name in `workspace_name`; use `workspace_slug` only when Faber
   reports duplicate names. Workspace selection happens before URL reservation,
-  so call `faber_publish_artifact` again with the same source and metadata plus
+  so call the same publication tool again with the same source and metadata plus
   exactly the selected workspace field. Never choose a workspace on the user's
   behalf. For an action returned with `publication_url`, surface that URL first
   and follow the recovery guidance without republishing.
@@ -182,7 +256,7 @@ cannot provide an inherited-model background agent, skip optional Context for
 this publication.
 
 Begin the background-task prompt with a `Target` block containing the exact
-`publication_url` returned by `faber_publish_artifact`. Tell the child to copy
+`publication_url` returned by `faber_publish_artifact` or `faber_publish_app`. Tell the child to copy
 that URL into `faber_attach_context`; it must never infer a target or workspace
 from a title, marker, or session fact. When the host provides a target-only
 frozen-handoff adapter, follow its launch instructions and supply only this
