@@ -69,8 +69,8 @@ Choose the publish source before doing any preparation:
   artifact by local name or path (download html if its on web) and asks to
   publish it unchanged, resolve its absolute path
   and use that file as the source. **Hard rule:** Before calling
-  `faber_publish_artifact`, do not use `Read`, Python, or any other tool to
-  inspect the file contents. Pass the file path as `content_ref`. Publish
+  `faber_publish_artifact`, do not inspect the file contents with any tool.
+  Pass the file path as `content_ref`. Publish
   the file as-is; do not rewrite, sample, parse, or stage it.
 - **Retrieved Faber artifact:** Use the exact fetched source as the starting
   point, apply the user's requested changes before publishing an amendment or
@@ -143,6 +143,11 @@ binary assets, or newly read source files. Do not place secret values in tool
 arguments, Context, or model responses.
 
 ### App configuration
+
+Configuration applies to any saved artifact with Faber capabilities, not only
+folder applications. Use its artifact ID as `app_id`; classification and source
+format stay unchanged. Do not republish a document as an application to enable
+capabilities.
 
 Use `faber_configure_app` with the app's `app_id` and workspace selector when
 the user requests configuration. Import secrets using only an absolute
