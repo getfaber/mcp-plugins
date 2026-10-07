@@ -62,16 +62,18 @@ and `derived_from_version`.
 
 Choose the publish source before doing any preparation:
 
-- **Ready frontend folder:** Use `faber_publish_app` with its absolute
-  `directory_ref`; follow Hosted apps below instead of single-file preparation.
-  Keep `faber_publish_artifact` for a single completed UTF-8 file.
-- **Existing local or web artifact:** When the user identifies an existing
-  artifact by local name or path (download html if its on web) and asks to
-  publish it unchanged, resolve its absolute path
-  and use that file as the source. **Hard rule:** Before calling
-  `faber_publish_artifact`, do not inspect the file contents with any tool.
-  Pass the file path as `content_ref`. Publish
-  the file as-is; do not rewrite, sample, parse, or stage it.
+- **Existing file or ready frontend folder:** When the user identifies a local
+  source and asks to publish it unchanged, resolve its absolute path and pass
+  that original path as `content_ref` to `faber_publish_artifact`. Only filesystem
+  metadata checks are allowed: `stat`/`lstat` to check source existence and kind
+  and root `index.html` presence. Prepare assistant-supplied publication metadata
+  only from the user's request and already-known context.
+  **Hard rule:** Do not read, inspect, sample, or parse source contents, or
+  rewrite, copy, stage, or relocate the source or its files. A folder must already
+  have root `index.html`;
+  follow Hosted apps below. Do not install dependencies or run a build as part
+  of publishing. For an existing web artifact, download it unchanged to a local
+  file and then follow the same rules.
 - **Retrieved Faber artifact:** Use the exact fetched source as the starting
   point, apply the user's requested changes before publishing an amendment or
   derived artifact, and preserve the fetched checkpoint's lineage. If the user
@@ -91,14 +93,18 @@ Choose the publish source before doing any preparation:
 ## Publishing
 
 Follow the `content_ref` field's eligibility, byte-limit, and oversize guidance.
-Publish one regular UTF-8 file through the `content_ref` field declared by
-`faber_publish_artifact`:
+Use `faber_publish_artifact` with one absolute `content_ref` pointing to a regular
+UTF-8 file or a ready frontend directory. There is no separate folder publishing
+tool or source-field alias. A single file retains any currently supported
+artifact classification; folders publish as `application`.
 
-- **Existing artifact:** Resolve and pass the existing file's absolute path
-  directly. Never stage it or rewrite it unless the user explicitly requested
-  those edits before publishing. Do not inspect or read the file contents before
-  the publish call; a rejection only permits inspection when the user explicitly
-  asks for validation.
+- **Existing artifact:** Pass the original file or directory's absolute path
+  directly. Only the filesystem metadata checks and request/context-derived
+  publication metadata described above are allowed; no content reads. The
+  unchanged-source rules above apply;
+  a rejection only permits inspection when the user explicitly asks for
+  validation. Editing or building requires a separate user request, not an
+  inferred publishing prerequisite.
 - **Retrieved or new artifact:** Prefer a uniquely named file in the
   host-resolved user home directory's `.faber/staging` folder. Pass its absolute
   path. If that location cannot be written or accessed, report the local-access
@@ -113,19 +119,21 @@ URL is visible.
 
 For `content_ref`, Faber stores an encrypted local outbox snapshot until
 delivery. It never moves, rewrites, changes permissions on, or deletes the
-source file. Once Faber returns a publication URL, never retry it through
-`faber_publish_artifact` or another publishing tool. Use that same URL for any
-explicit status or recovery call.
+source file or directory. Once Faber returns a publication URL, never retry it
+through `faber_publish_artifact` or another publishing tool. Use that same URL
+for any explicit status or recovery call.
 Reports are private to the publishing user by default.
 
 ### Hosted apps
 
 Publish a ready frontend folder with root `index.html` using
-`faber_publish_app`. Build framework projects before calling the tool; the
-tool never installs dependencies or executes build scripts. Supply title,
-workspace selection, `update_of`, and version-pinned lineage as appropriate.
-Use `routing_mode=spa` only when navigation requires index fallback; the default
-is `static`.
+`faber_publish_artifact(content_ref=<absolute directory path>)`. Publish the
+ready folder as-is; neither the assistant nor the tool builds it during
+publication. The tool never installs dependencies or executes build scripts.
+Supply title, workspace selection, `update_of`, and version-pinned lineage as
+appropriate.
+`routing_mode` applies only to folders: use `spa` only when navigation requires
+index fallback; the default is `static`. Omit it for a single file.
 
 Capture includes every regular file in the folder, including new and uncommitted
 files, with limits of 20 MiB and 2,000 files. Authors are responsible for the
@@ -167,37 +175,12 @@ conflict automatically. Report only key names, revision, configuration status,
 or the returned safe error. If delivery is uncertain, check configuration before
 another user-authorized import. Configuration never starts artifact Context.
 
-### Local verification
-
-Only run these checks when local verification is explicitly requested:
-
-1. Wait until all contributing changes are finished, then freeze the source and
-   extract the candidate from the final production web image. Source Go tests,
-   a source-built local tool, and simulated hosts do not verify that image.
-   Keep its checksum and use the same packaged candidate in each real host.
-2. Use an isolated host profile and working directory outside the repository.
-   Set API and app origins explicitly to the local stack, ensure configuration
-   endpoints are ready, and confirm only the intended packaged server is
-   registered. Stop if consent, the MCP destination, or the returned URL points
-   to hosted production instead of the local stack.
-3. Publish a ready folder containing root `index.html`, scripts, styles, a binary
-   asset, and a new/uncommitted file. Record the complete source inventory.
-   Verify eventual publication, exact downloaded bytes, and
-   source immutability. Interrupt delivery, change the source folder, and recover
-   the original receipt; delivery must use its frozen bytes without republishing.
-4. Keep synthetic secret files outside the bundle. Test JSON and dotenv imports,
-   explicit key selection, owner/editor access, conflicts, and failure responses.
-   Values must not appear in results, model context, logs, downloads, or Clone.
-5. Record publication, optional Context, configuration, and service readiness
-   separately. A reserved URL or passing source test is not a packaged-host pass.
-   Do not claim real-host or image acceptance until those exact runs complete.
-
 ## Handle the publication result
 
 Handle exactly one result branch:
 
 - **Complete:** Surface the artifact URL immediately.
-- **Pending:** A local `content_ref` or `directory_ref` publication returns a
+- **Pending:** A local `content_ref` publication returns a
   reserved Faber URL within 20 seconds of durable snapshot acceptance. Surface that URL
   immediately; do not poll or keep the task active.
 - **Action required:** Follow the returned action. If there are workspace choices,
@@ -261,7 +244,7 @@ cannot provide an inherited-model background agent, skip optional Context for
 this publication.
 
 Begin the background-task prompt with a `Target` block containing the exact
-`publication_url` returned by `faber_publish_artifact` or `faber_publish_app`. Tell the child to copy
+`publication_url` returned by `faber_publish_artifact`. Tell the child to copy
 that URL into `faber_attach_context`; it must never infer a target or workspace
 from a title, marker, or session fact. When the host provides a target-only
 frozen-handoff adapter, follow its launch instructions and supply only this

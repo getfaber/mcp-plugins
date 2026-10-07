@@ -113,7 +113,7 @@
     {
       "name": "faber_publish_artifact",
       "title": "Publish artifact to Faber",
-      "description": "Publish one completed local UTF-8 artifact file to Faber. Pass its absolute path in content_ref. Faber validates the file, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare Context before the publication URL is visible. Reports are private to the publishing user by default. For the main agent's initial successful complete or pending response, return only the bare Faber URL: no progress narration, label, recap, workspace or status prose, or Context note. Follow any returned context_action only after surfacing that URL.",
+      "description": "Publish one completed local UTF-8 artifact file or ready frontend directory to Faber. Pass its absolute path in content_ref. Directories require root index.html; routing_mode is optional and valid only for directories. Faber validates the source, resolves the workspace, stores an encrypted local snapshot, reserves a clickable URL, and returns that bare URL within 20 seconds without waiting for delivery. If workspace selection is required, ask the user to choose and call this tool again with workspace_name or workspace_slug. Do not prepare Context before the publication URL is visible. Reports are private to the publishing user by default. For the main agent's initial successful complete or pending response, return only the bare Faber URL: no progress narration, label, recap, workspace or status prose, or Context note. Follow any returned context_action only after surfacing that URL.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -123,7 +123,7 @@
             "maxLength": 300
           },
           "type": {
-            "description": "Product class describing what the artifact is. Defaults to document. For HTML, choose by the primary experience and editing contract: use document when the durable value is readable, editable content and interaction only supports it; use application when operating a stateful tool or workflow and its computed outputs are the primary value, so visible content and behavior must change together through republishing. The presence or amount of JavaScript does not determine the type. Default uncertain HTML to document. Applications are content view-only. React artifacts require application.",
+            "description": "For directories, omitted type defaults to application; explicit types other than application are rejected. For single-file artifacts: Product class describing what the artifact is. Defaults to document. For HTML, choose by the primary experience and editing contract: use document when the durable value is readable, editable content and interaction only supports it; use application when operating a stateful tool or workflow and its computed outputs are the primary value, so visible content and behavior must change together through republishing. The presence or amount of JavaScript does not determine the type. Default uncertain HTML to document. Applications are content view-only. React artifacts require application.",
             "type": "string",
             "enum": [
               "document",
@@ -190,7 +190,16 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 4096,
-            "description": "Absolute path to one local UTF-8 artifact file of at most 20 MiB. For a newly generated artifact, default to a uniquely named file under ~/.faber/staging. For an existing artifact, pass its original path directly from any local directory. Faber stores an encrypted local outbox snapshot until delivery; it never moves, rewrites, changes permissions on, or deletes the source file. Do not pass directories, symlinks, credential locations, or files containing secrets."
+            "description": "Absolute path to one local UTF-8 artifact file or a ready frontend directory with root index.html. Maximum 20 MiB; directories may contain at most 2,000 files and include every regular file, including new/uncommitted files. Publish ready sources as-is without installing dependencies or running builds. Faber does not build or execute scripts. Directory capture does not scan for secrets; authors are responsible for directory contents. Single-file publishing retains credential-location and secret safeguards. For a newly generated single-file artifact, default to a uniquely named file under ~/.faber/staging. For an existing artifact, pass its original path directly from any local directory. Faber stores an encrypted local outbox snapshot until delivery; it never moves, rewrites, changes permissions on, or deletes source files. Do not pass symlinks or files containing secrets."
+          },
+          "routing_mode": {
+            "type": "string",
+            "enum": [
+              "static",
+              "spa"
+            ],
+            "default": "static",
+            "description": "For directories only: static serves matching files; spa falls back to root index.html for client-side navigation. Omit for single-file artifacts."
           }
         },
         "required": [
