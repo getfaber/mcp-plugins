@@ -5,7 +5,7 @@
     {
       "name": "faber_attach_context",
       "title": "Attach context to a Faber artifact",
-      "description": "Complete context_action=attach_if_background_supported from a successful Faber publication. Attach concise Markdown context grounded in the artifact and publishing session to the exact published artifact version. Faber converts it to its canonical Context Capsule. This does not create another artifact version. The first valid attachment wins, and retries are idempotent.",
+      "description": "Complete context_action=attach_if_background_supported from a successful Faber publication. Attach Markdown Context grounded in the artifact and publishing session to the exact published artifact version, detailed enough for another person's agent to reconstruct the session and resume the work. Faber converts it to its canonical Context Capsule. This does not create another artifact version. The first valid attachment wins, and retries are idempotent.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -18,8 +18,8 @@
           "context_markdown": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 65536,
-            "description": "Reusable Markdown context grounded in the artifact and publishing session. Use an Outcome heading and optional headings for decisions, procedures, lessons, best practices, open questions, or other knowledge."
+            "maxLength": 262144,
+            "description": "Markdown Context grounded in the artifact and publishing session. Start with an Outcome heading, then use headings for decisions, procedures, lessons, best practices, current state, next steps, assumptions and constraints, inputs, open questions, a session log, or other knowledge."
           }
         },
         "required": [
@@ -64,7 +64,7 @@
     {
       "name": "faber_get_artifact",
       "title": "Get artifact source from Faber",
-      "description": "Fetch one accessible version of a Faber artifact with its source and shareable provenance. Accepts a UUID or pasted Faber URL; a URL with ?version=N always fetches that exact checkpoint. The separately attached Context Capsule is not returned by this tool. Use update_of when revising the same artifact and derived_from plus derived_from_version for distinct work.",
+      "description": "Fetch one accessible version of a Faber artifact with its source and shareable provenance. Accepts a UUID or pasted Faber URL; a URL with ?version=N always fetches that exact checkpoint. Set include_context=true to also return that version's Context: the outcome, decisions, current state, next steps, assumptions, inputs, open questions, and session log captured when it was published, which is what you need to resume someone's work. Use update_of when revising the same artifact and derived_from plus derived_from_version for distinct work.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -77,6 +77,10 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
+          },
+          "include_context": {
+            "description": "Also return the fetched version's Context so you can reconstruct the session and resume the work.",
+            "type": "boolean"
           }
         },
         "required": [

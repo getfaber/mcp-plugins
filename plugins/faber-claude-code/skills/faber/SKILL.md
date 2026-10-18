@@ -20,6 +20,11 @@ Route the request before doing any artifact preparation:
   fetch exact source only when a result is relevant. If multiple results could
   be the intended artifact, ask the user to choose before fetching. Return the
   requested result and do not continue into publishing.
+- **Resume work:** To continue someone's work from a Faber artifact, fetch it
+  with `faber_get_artifact` and `include_context=true`. Reconstruct the session
+  from its Context (current state, next steps, assumptions and constraints,
+  inputs, open questions, and session log), check that its inputs are
+  available, and follow the user's resume instructions.
 - **Retrieve, then publish:** Retrieve first, then continue with the exact
   source and lineage rules below. If the intended artifact cannot be resolved,
   stop or ask the user to choose; never fall through to new-artifact creation.
@@ -88,7 +93,7 @@ Choose the publish source before doing any preparation:
 2. For HTML, follow `references/html-publishing.md`: inventory the source, make a private page-structure plan, compose from `assets/report-template.html`, validate, and only then publish. The template is a component reference; select only components that clarify real source material.
 3. Choose the artifact type by its primary experience and editing contract, not by the presence or amount of JavaScript. Default uncertain HTML to `document`. Use `document` when readable, editable content is the durable value and interaction supports it. Infer `application` only when operating a stateful tool or workflow and its computed outputs are the primary value, or when editing visible content independently could desynchronize it from behavior. A script, chart, map, filter, audio control, or calculator does not by itself make HTML an application. Applications are content view-only and must be republished to change; React artifacts require `application`.
 4. Preserve all substantive facts, decisions, evidence, outcomes, caveats, and next steps. Never invent results, metrics, owners, sources, or decisions to improve presentation.
-5. Keep the report portable. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, media, and data into the single file. Bundled `data:`/`blob:` audio and video may play after user interaction; autoplay and remote media remain blocked. Scripts run as a normal page inside Faber's sandboxed iframe as described in `references/html-publishing.md`. They cannot fetch the network, load remote scripts or fonts, nest frames, or submit forms. Do not use `location.href` or meta-refresh to leave the canvas. Pure computation libraries may be bundled; browser libraries that require network access must be adapted or avoided. Never put secrets, unauthorized recordings, raw transcripts, or audience-inappropriate details in either output. Context may preserve bounded session-only rationale and evidence, but it inherits the artifact's visibility, so include only distilled facts appropriate for everyone who can view the artifact.
+5. Keep the report portable. Use classic inline JavaScript only when interaction materially improves the artifact, and bundle all HTML, CSS, JavaScript, images, media, and data into the single file. Bundled `data:`/`blob:` audio and video may play after user interaction; autoplay and remote media remain blocked. Scripts run as a normal page inside Faber's sandboxed iframe as described in `references/html-publishing.md`. They cannot fetch the network, load remote scripts or fonts, nest frames, or submit forms. Do not use `location.href` or meta-refresh to leave the canvas. Pure computation libraries may be bundled; browser libraries that require network access must be adapted or avoided. Never put secrets, unauthorized recordings, raw transcripts, or audience-inappropriate details in either output. Context preserves the session's work state and history so another person can resume the work; it inherits the artifact's visibility, so never include credentials in it.
 
 ## Publishing
 
@@ -260,24 +265,27 @@ The adapter adds the frozen artifact and session sections; do not construct,
 copy, or paraphrase them yourself. Without that capability, after the Target
 block provide an `Artifact (primary evidence)` section with at most 64 KiB of
 readable visible artifact text and a `Session (supplemental)` section with at
-most 32 KiB of normalized session context. Use both the artifact and session
-context to extract relevant durable knowledge. Treat the artifact as authoritative
-for delivered work; use the session for relevant rationale, constraints,
-decisions, and unresolved questions not represented in the artifact. Both must
-suit the artifact's full audience. Remove scripts, styles, and embedded data from
-primary text, but preserve harmless filenames and path-like text; reject
-credentials instead of rewriting the artifact. Sanitize only supplemental context
-by removing credentials, transcript framing, local paths and file references,
-Faber links, publication or workspace mechanics, capability fields, and tool
-mechanics.
+most 512 KiB of normalized session context, including summarized tool calls and
+results. Use both the artifact and session context to extract Context detailed
+enough for another person's agent to reconstruct the session and resume the
+work. Treat the artifact as authoritative for delivered work; use the session
+for the goal, rationale, constraints, decisions, rejected approaches, inputs,
+progress, and unresolved questions not represented in the artifact. Remove
+scripts, styles, and embedded data from primary text, but preserve filenames and
+path-like text; reject credentials instead of rewriting the artifact. Redact only
+credentials from supplemental context; keep local paths, file references,
+commands, and URLs so the work can be resumed.
 When a frozen-handoff adapter is present, launch and explicit retry use the same
 frozen sections through that adapter; never reread or rebuild session content on
 retry.
-Preserve cited public HTTP or HTTPS evidence links. The exact target belongs
-only in the `Target` block. If no safe meaningful Context remains, skip it.
-This transfer is not capsule drafting: the child creates concise reusable
-Markdown, and Faber converts it to its canonical Context Capsule. Its `## Outcome`
-must be small: fewer than 50 words in total. The main agent
+Preserve cited HTTP or HTTPS evidence links. The exact target belongs
+only in the `Target` block. If no meaningful Context remains, skip it.
+This transfer is not capsule drafting: the child writes the Markdown, and Faber
+converts it to its canonical Context Capsule. It starts with a short
+`## Outcome`, keeps the reusable knowledge headings, and adds `## Current State`,
+`## Next Steps`, `## Assumptions & Constraints`, `## Inputs`,
+`## Open Questions`, and a `## Session Log` with one entry per user request.
+The main agent
 must not draft or attach Context, wait, poll, or use blocking work as a fallback.
 The child agent's failure never invalidates the artifact and does not trigger a
 second generation path. Keep optional outcomes silent unless the user requests
