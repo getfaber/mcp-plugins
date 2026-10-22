@@ -285,6 +285,9 @@ converts it to its canonical Context Capsule. It starts with a short
 `## Outcome`, keeps the reusable knowledge headings, and adds `## Current State`,
 `## Next Steps`, `## Assumptions & Constraints`, `## Inputs`,
 `## Open Questions`, and a `## Session Log` with one entry per user request.
+Keep `## Outcome` under 75 words total, ideally 2–3 sentences. State what was
+delivered and its current status, including any critical caveat. Put chronology,
+rationale, inputs, and next steps in their dedicated sections.
 The main agent
 must not draft or attach Context, wait, poll, or use blocking work as a fallback.
 The child agent's failure never invalidates the artifact and does not trigger a
