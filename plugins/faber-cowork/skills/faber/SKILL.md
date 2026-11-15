@@ -141,7 +141,7 @@ appropriate.
 index fallback; the default is `static`. Omit it for a single file.
 
 Capture includes every regular file in the folder, including new and uncommitted
-files, with limits of 20 MiB and 2,000 files. Authors are responsible for the
+files, with limits of 50 MiB and 2,000 files. Authors are responsible for the
 folder contents: capture does not scan for credentials, block credential
 filenames, redact files, or request an extra secret confirmation. The immutable
 binary bundle and manifest are stored in the encrypted local outbox. Delivery
